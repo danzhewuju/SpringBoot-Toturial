@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.satan.mapper.ComplexQueryMapper">
+    <resultMap id="User" type="com.satan.pojo.User">
+        <result property="id" column="id" javaType="Integer" jdbcType="INTEGER"/>
+        <result property="name" column="name" javaType="String" jdbcType="VARCHAR"/>
+        <result property="age" column="age" javaType="Integer" jdbcType="INTEGER"/>
+        <result property="email" column="email" javaType="String" jdbcType="VARCHAR"/>
+
+    </resultMap>
+
+    <resultMap id="Game" type="com.satan.pojo.Game">
+        <result property="id" column="id" javaType="Integer" jdbcType="INTEGER"/>
+        <result property="user_id" column="user_id" javaType="Integer" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="QueryGame" resultMap="User">
+        SELECT *
+        FROM user
+    </select>
+
+
+</mapper>
