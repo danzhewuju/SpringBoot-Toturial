@@ -1,6 +1,6 @@
 package com.satan.mapper;
 
-import com.satan.pojo.User;
+import com.satan.mode.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 

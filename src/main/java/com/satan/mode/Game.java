@@ -1,9 +1,9 @@
-package com.satan.pojo;
+package com.satan.mode;
 
 import lombok.Data;
 
 @Data
 public class Game {
-  private int id;
+  private Integer id;
   private int user_id;
 }
