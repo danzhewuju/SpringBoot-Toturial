@@ -8,4 +8,5 @@ import java.util.List;
 public class ComplexQuery {
     private String type;
     private List<Integer> ids;
+    private List<String> emails;
 }

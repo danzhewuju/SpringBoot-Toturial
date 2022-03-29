@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/test")
@@ -40,5 +41,14 @@ public class HelloWorld {
     String res;
     res = user.getName() + "say:  my name is " + user.getName();
     return res;
+  }
+
+  @GetMapping(value = "/map", produces = MediaType.APPLICATION_JSON_VALUE)
+  public String testMaps(@RequestParam Map<String, Object>  map){
+    StringBuilder sb = new StringBuilder();
+    for(String key:map.keySet()){
+      sb.append(key+":"+map.get(key)+"\n");
+    }
+    return sb.toString();
   }
 }

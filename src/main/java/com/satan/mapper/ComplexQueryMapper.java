@@ -17,4 +17,6 @@ public interface ComplexQueryMapper {
   List<User> QueryUsers(@Param("CQ") ComplexQuery complexQuery);
 
   List<ComplexQueryResult> QueryComplex(@Param("CQ") ComplexQuery complexQuery);
+
+  List<ComplexQueryResult> QueryComplexJoin(@Param("CQ") ComplexQuery complexQuery);
 }

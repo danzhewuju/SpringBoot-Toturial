@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,5 +85,33 @@ public class MyBatisPlusApplicationTests {
     List<ComplexQueryResult> complexQueryResults = complexQueryMapper.QueryComplex(complexQuery);
     System.out.println(complexQueryResults.size());
     log.info("{}", complexQueryResults);
+  }
+
+  @Test
+  public void TestAssert() {
+    int a = 0;
+    Student stu =null;
+    Assert.notNull(stu, "不为空");
+    System.out.println("after assert!!!");
+  }
+
+  @Test
+  public void TestQueryJoin(){
+    ComplexQuery complexQuery = new ComplexQuery();
+    complexQuery.setType("User");
+    List<Integer> data =
+            new ArrayList<Integer>() {
+              {
+                add(0);
+                add(1);
+              }
+            };
+    complexQuery.setIds(data);
+    List<String> emails = new ArrayList<String>(){{
+      add("danyuhao@qq.com");
+      add("lvjin@qq.com");
+    }};
+    complexQuery.setEmails(emails);
+    List<ComplexQueryResult> complexQueryResults = complexQueryMapper.QueryComplexJoin(complexQuery);
   }
 }
