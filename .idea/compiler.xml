@@ -13,7 +13,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="spring-boot-mybatis-plus" options="-parameters" />
+      <module name="spring-boot-mybatis-plus" options="-parameters -extdirs lib" />
     </option>
   </component>
 </project>
