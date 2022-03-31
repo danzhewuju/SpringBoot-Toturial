@@ -1,0 +1,23 @@
+#采用多文件配置进行测试
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+server:
+  port: 8080
+spring:
+  h2:
+    console:
+      path: /h2-console #进入h2 web操作界面的路径
+      enabled: true #开启h2 web界面
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:users
+    username: root
+    password: test
+  swagger:
+    url: http://localhost:8080/api
+  sql:
+    init:
+      schema-locations: classpath:db/schema-h2.sql
+      data-locations: classpath:db/data-h2.sql

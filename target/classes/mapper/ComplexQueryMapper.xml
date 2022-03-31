@@ -36,10 +36,19 @@
     </select>
 
     <select id="QueryComplex" resultMap="ComplexQueryResult">
-        select u.id as uid, name, age, email, g.id as gid from user u inner join game g on u.id = g.user_id
+        select u.id as uid, email, g.id as gid from user u inner join game g on u.id = g.user_id
         where
         <foreach collection="CQ.ids" item="t" separator="or">
-            u.id=#{t}
+            u.id = #{t}
+        </foreach>
+    </select>
+
+    <select id="QueryComplexJoin" resultMap="ComplexQueryResult">
+        select u.id as uid, name, age, email, g.id as gid from user u inner join game g on u.id = g.user_id
+        where
+        <foreach collection="CQ.ids" item="t" separator=") or (" index="idx" open="(" close=")">
+
+            u.id=#{t} AND email = #{CQ.emails[${idx}]}
         </foreach>
     </select>
 

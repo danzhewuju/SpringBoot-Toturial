@@ -3,13 +3,18 @@ package com.satan.controller;
 import com.satan.mode.User;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Past;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Validated
 @RestController
 @RequestMapping(value = "/test")
 @Api(tags = "接口测试")
@@ -44,11 +49,30 @@ public class HelloWorld {
   }
 
   @GetMapping(value = "/map", produces = MediaType.APPLICATION_JSON_VALUE)
-  public String testMaps(@RequestParam Map<String, Object>  map){
+  public String testMaps(@RequestParam Map<String, Object> map) {
     StringBuilder sb = new StringBuilder();
-    for(String key:map.keySet()){
-      sb.append(key+":"+map.get(key)+"\n");
+    for (String key : map.keySet()) {
+      sb.append(key + ":" + map.get(key) + "\n");
     }
     return sb.toString();
+  }
+
+  @GetMapping(value = "/date", produces = MediaType.APPLICATION_JSON_VALUE)
+  public String testDate(
+      @Past @RequestParam(value = "date", required = false, defaultValue = "")
+          @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+          Date date) {
+
+    if (date != null) {
+      String timeStamp =null;
+      try{
+        timeStamp = String.valueOf(date.getTime());
+      } catch (IllegalArgumentException e){
+        return "error: "+e.toString();
+      }
+      return timeStamp;
+    } else {
+      return "date is wrong!";
+    }
   }
 }
