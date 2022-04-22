@@ -90,28 +90,32 @@ public class MyBatisPlusApplicationTests {
   @Test
   public void TestAssert() {
     int a = 0;
-    Student stu =null;
+    Student stu = null;
     Assert.notNull(stu, "不为空");
     System.out.println("after assert!!!");
   }
 
   @Test
-  public void TestQueryJoin(){
+  public void TestQueryJoin() {
     ComplexQuery complexQuery = new ComplexQuery();
     complexQuery.setType("User");
     List<Integer> data =
-            new ArrayList<Integer>() {
-              {
-                add(0);
-                add(1);
-              }
-            };
+        new ArrayList<Integer>() {
+          {
+            add(0);
+            add(1);
+          }
+        };
     complexQuery.setIds(data);
-    List<String> emails = new ArrayList<String>(){{
-      add("danyuhao@qq.com");
-      add("lvjin@qq.com");
-    }};
+    List<String> emails =
+        new ArrayList<String>() {
+          {
+            add("danyuhao@qq.com");
+            add("lvjin@qq.com");
+          }
+        };
     complexQuery.setEmails(emails);
-    List<ComplexQueryResult> complexQueryResults = complexQueryMapper.QueryComplexJoin(complexQuery);
+    List<ComplexQueryResult> complexQueryResults =
+        complexQueryMapper.QueryComplexJoin(complexQuery);
   }
 }
