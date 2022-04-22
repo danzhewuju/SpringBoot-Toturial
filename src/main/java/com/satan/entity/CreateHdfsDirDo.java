@@ -5,8 +5,8 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class CreateDirDo {
+public class CreateHdfsDirDo {
     @NotBlank(message = "job id is blank")
-    private String job_id;
+    private String jobId;
 
 }

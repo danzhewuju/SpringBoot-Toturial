@@ -1,10 +1,14 @@
 package com.satan.service;
 
 import com.satan.common.Result;
-import com.satan.entity.CreateDirDo;
+import com.satan.entity.CreateHdfsDirDo;
+import com.satan.entity.DelHdfsDirDo;
 
-import java.sql.ResultSet;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 public interface HdfsService {
-    public Result<String> hdfsCreateDir(CreateDirDo createDirDo);
+    Result<String> hdfsCreateDir(CreateHdfsDirDo createHdfsDirDo) throws URISyntaxException, IOException;
+
+    Result<String> hdfsDeleteDir(DelHdfsDirDo delHdfsDirDo);
 }
