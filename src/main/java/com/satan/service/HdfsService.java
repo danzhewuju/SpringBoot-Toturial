@@ -1,14 +1,16 @@
 package com.satan.service;
 
-import com.satan.common.Result;
-import com.satan.entity.CreateHdfsDirDo;
+import com.satan.entity.CopyDataToMultiBucketDo;
+import com.satan.entity.CreateDirDo;
 import com.satan.entity.DelHdfsDirDo;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
+import com.satan.entity.UploadBucketDo;
 
 public interface HdfsService {
-    Result<String> hdfsCreateDir(CreateHdfsDirDo createHdfsDirDo) throws URISyntaxException, IOException;
+  String createHdfsDir(CreateDirDo createDirDo) throws Exception;
 
-    Result<String> hdfsDeleteDir(DelHdfsDirDo delHdfsDirDo);
+  String delHdfsDir(DelHdfsDirDo delHdfsDirDo) throws Exception;
+
+//  String uploadFlinkBucket(UploadBucketDo uploadBucketDo);
+
+  String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo);
 }

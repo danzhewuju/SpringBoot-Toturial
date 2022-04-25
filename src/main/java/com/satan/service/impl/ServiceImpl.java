@@ -1,9 +1,10 @@
 package com.satan.service.impl;
 
-import com.satan.common.Result;
-import com.satan.entity.CreateHdfsDirDo;
+import com.satan.entity.CopyDataToMultiBucketDo;
+import com.satan.entity.CreateDirDo;
 import com.satan.entity.DelHdfsDirDo;
 import com.satan.service.HdfsService;
+import com.satan.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -19,7 +20,7 @@ import java.net.URISyntaxException;
 @Slf4j
 public class ServiceImpl implements HdfsService {
   @Value("${hdfs.base.path}")
-  private String basePath;
+  private String flinkJarBasePath;
 
   @Value("${hdfs.bucket.path}")
   private String bucketPath;
@@ -27,41 +28,83 @@ public class ServiceImpl implements HdfsService {
   @Value("${hdfs.path}")
   private String hdfsPath;
 
-  @Override
-  public Result<String> hdfsCreateDir(CreateHdfsDirDo createHdfsDirDo) throws URISyntaxException {
+  public FileSystem getFileSystem(String user)
+      throws URISyntaxException, IOException, InterruptedException {
+    Configuration configuration = new Configuration();
+    FileSystem fs = FileSystem.get(new URI(hdfsPath), configuration, user);
+    return fs;
+  }
 
+  @Override
+  public String createHdfsDir(CreateDirDo createDirDo) throws Exception {
+    FileSystem fs = null;
+    String mes;
     try {
-      Configuration configuration = new Configuration();
-      FileSystem fs = FileSystem.get(new URI(hdfsPath), configuration);
-      String id = String.valueOf(Math.abs(createHdfsDirDo.getJobId().hashCode() % 100));
-      String newPath = bucketPath + "/" + id;
-      fs.mkdirs(new Path(newPath));
-      return Result.succ(newPath);
-    } catch (IOException e) {
-      log.info(e.toString());
-      return Result.fail("data is wrong");
+      fs = getFileSystem(Constants.HDFS_USER);
+      // 所需要创建的路径 例如：/hdfsPath/flinkVersion/bucketID/
+      String bucketPath =
+          flinkJarBasePath + "/" + createDirDo.getTag() + "/" + createDirDo.getBucketID();
+      if (fs.exists(new Path(bucketPath))) {
+        mes = "bucketID already exists:" + bucketPath;
+      } else {
+        fs.mkdirs(new Path(bucketPath));
+        mes = "create hdfs dir success, path is " + bucketPath;
+      }
+      log.info("create hdfs dir success, path is {}", bucketPath);
+      return mes;
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      return "create dir error";
     }
   }
 
   @Override
-  public Result<String> hdfsDeleteDir(DelHdfsDirDo delHdfsDirDo) {
-    Configuration configuration = new Configuration();
+  public String delHdfsDir(DelHdfsDirDo delHdfsDirDo) throws Exception {
+    FileSystem fs = null;
+    String mes = "";
     try {
-      FileSystem fs = FileSystem.get(new URI(hdfsPath), configuration);
-      String id = String.valueOf(Math.abs(delHdfsDirDo.getJobId().hashCode() % 100));
-      String newPath = bucketPath + "/" + id;
-      if (fs.exists(new Path(newPath))) {
-        fs.delete(new Path(newPath), true);
-        return Result.succ("del dir :" + newPath);
-      } else {
-        return Result.fail("bucket id path is not exit! ");
+      fs = getFileSystem(Constants.HDFS_USER);
+      // 删除对应路径数据 例如：/hdfsPath/flinkVersion/bucketID/
+      String bucketPath =
+          flinkJarBasePath + "/" + delHdfsDirDo.getTag() + "/" + delHdfsDirDo.getBucketID();
+      if (fs.exists(new Path(bucketPath))) { // if the file exists
+        fs.delete(new Path(bucketPath), true);
+        mes = "del dir success:" + bucketPath;
+      } else { // if the file not exists
+        mes = "bucketID is not exist:" + bucketPath;
       }
-    } catch (IOException e) {
-      log.info(e.toString());
-      return Result.fail("connect HDFS IO error");
-    } catch (URISyntaxException e) {
-      log.info(e.toString());
-      return Result.fail("connect HDFS URI error");
+      log.info(mes);
+      return mes;
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      return "del dir error";
     }
+  }
+
+  @Override
+  public String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo) {
+
+    FileSystem fs = null;
+    String message = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      String hdfsSourceBucket =
+          flinkJarBasePath
+              + "/"
+              + copyDataToMultiBucketDo.getTag()
+              + "/"
+              + copyDataToMultiBucketDo.getSourceBucketID();
+      for (String targetBucketID : copyDataToMultiBucketDo.getTargetBucketIDs()) {
+        String hdfsTargetBucket =
+            flinkJarBasePath + "/" + copyDataToMultiBucketDo.getTag() + "/" + targetBucketID;
+        fs.copyToLocalFile(new Path(hdfsSourceBucket), new Path(hdfsTargetBucket));
+      }
+      message = "copy data to all bucket success";
+
+    } catch (Exception e) {
+      log.info(e.getMessage(), e);
+      message = "copy data to all bucket error";
+    }
+    return message;
   }
 }
