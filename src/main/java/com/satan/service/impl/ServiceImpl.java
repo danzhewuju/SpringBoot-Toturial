@@ -47,15 +47,17 @@ public class ServiceImpl implements HdfsService {
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       // 所需要创建的路径 例如：/hdfsPath/flinkVersion/bucketID/
-      String bucketPath =
-          flinkJarBasePath + "/" + createDirDo.getTag() + "/" + createDirDo.getBucketID();
-      if (fs.exists(new Path(bucketPath))) {
-        mes = "bucketID already exists:" + bucketPath;
-      } else {
-        fs.mkdirs(new Path(bucketPath));
-        mes = "create hdfs dir success, path is " + bucketPath;
+      for (String bucketId : createDirDo.getBucketIDs()) {
+        String bucketPath = flinkJarBasePath + "/" + createDirDo.getTag() + "/" + bucketId;
+        if (fs.exists(new Path(bucketPath))) {
+          mes = "bucketID already exists:" + bucketPath;
+        } else {
+          fs.mkdirs(new Path(bucketPath));
+        }
       }
-      log.info("create hdfs dir success, path is {}", bucketPath);
+      mes = String.format("create hdfs dir success");
+
+      log.info("create hdfs dir success, path is {}", createDirDo.getBucketIDs());
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -70,15 +72,16 @@ public class ServiceImpl implements HdfsService {
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       // 删除对应路径数据 例如：/hdfsPath/flinkVersion/bucketID/
-      String bucketPath =
-          flinkJarBasePath + "/" + delHdfsDirDo.getTag() + "/" + delHdfsDirDo.getBucketID();
-      if (fs.exists(new Path(bucketPath))) { // if the file exists
-        fs.delete(new Path(bucketPath), true);
-        mes = "del dir success:" + bucketPath;
-      } else { // if the file not exists
-        mes = "bucketID is not exist:" + bucketPath;
+      for (String bucketId : delHdfsDirDo.getBucketIds()) {
+        String bucketPath = flinkJarBasePath + "/" + delHdfsDirDo.getTag() + "/" + bucketId;
+        if (fs.exists(new Path(bucketPath))) { // if the file exists
+          fs.delete(new Path(bucketPath), true);
+        } else { // if the file not exists
+          mes = "bucketID is not exist:" + bucketPath;
+          log.info(mes);
+        }
       }
-      log.info(mes);
+      mes = String.format("all buckets have been deleted!");
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -86,32 +89,25 @@ public class ServiceImpl implements HdfsService {
     }
   }
 
-  @Override
-  public String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo)
-      throws URISyntaxException, IOException, InterruptedException {
 
+  @Override
+  public String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo) throws Exception {
     FileSystem fs = null;
     String message = null;
     try {
       fs = getFileSystem(Constants.HDFS_USER);
-      String hdfsSourceBucket =
-          flinkJarBasePath
-              + "/"
-              + copyDataToMultiBucketDo.getTag()
-              + "/"
-              + copyDataToMultiBucketDo.getSourceBucketID();
+      String hdfsSourceBucket = flinkJarBasePath + "/" + copyDataToMultiBucketDo.getTag() + "/" + copyDataToMultiBucketDo.getSourceBucketID();
       for (String targetBucketID : copyDataToMultiBucketDo.getTargetBucketIDs()) {
-        String hdfsTargetBucket =
-            flinkJarBasePath + "/" + copyDataToMultiBucketDo.getTag() + "/" + targetBucketID;
-        FileUtil.copy(fs, new Path(hdfsSourceBucket),fs, new Path(hdfsTargetBucket),false,fs.getConf());
+        String hdfsTargetBucket = flinkJarBasePath + "/" + copyDataToMultiBucketDo.getTag() + "/" + targetBucketID;
+        org.apache.hadoop.fs.FileUtil.copy(fs, new Path(hdfsSourceBucket), fs, new Path(hdfsTargetBucket), false, fs.getConf());
 
       }
       message = "copy data to all bucket success";
       return message;
-
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;
+
     }
   }
 }

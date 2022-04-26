@@ -15,5 +15,5 @@ public interface HdfsService {
 
 //  String uploadFlinkBucket(UploadBucketDo uploadBucketDo);
 
-  String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo) throws URISyntaxException, IOException, InterruptedException;
+  String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo) throws URISyntaxException, IOException, InterruptedException, Exception;
 }
