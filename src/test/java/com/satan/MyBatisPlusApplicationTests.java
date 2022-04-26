@@ -10,6 +10,10 @@ import com.satan.mode.ComplexQueryResult;
 import com.satan.mode.Student;
 import com.satan.mode.User;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +21,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.Assert;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,5 +124,15 @@ public class MyBatisPlusApplicationTests {
     complexQuery.setEmails(emails);
     List<ComplexQueryResult> complexQueryResults =
         complexQueryMapper.QueryComplexJoin(complexQuery);
+  }
+
+  @Test
+  public void testHdfsCopyDir() throws URISyntaxException, IOException, InterruptedException {
+    Configuration configuration = new Configuration();
+    configuration.set("dfs.client.use.datanode.hostname", "true");
+    FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
+    FileUtil.copy(
+        fs, new Path("/test/flink/1"), fs, new Path("/test/flink/7"), false, configuration);
+ log.info("run success");
   }
 }

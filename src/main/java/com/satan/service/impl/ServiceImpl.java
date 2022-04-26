@@ -8,11 +8,16 @@ import com.satan.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -22,16 +27,16 @@ public class ServiceImpl implements HdfsService {
   @Value("${hdfs.base.path}")
   private String flinkJarBasePath;
 
-  @Value("${hdfs.bucket.path}")
-  private String bucketPath;
-
   @Value("${hdfs.path}")
   private String hdfsPath;
+
 
   public FileSystem getFileSystem(String user)
       throws URISyntaxException, IOException, InterruptedException {
     Configuration configuration = new Configuration();
+    configuration.set("dfs.client.use.datanode.hostname", "true");
     FileSystem fs = FileSystem.get(new URI(hdfsPath), configuration, user);
+
     return fs;
   }
 
@@ -54,7 +59,7 @@ public class ServiceImpl implements HdfsService {
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
-      return "create dir error";
+      throw e;
     }
   }
 
@@ -77,12 +82,13 @@ public class ServiceImpl implements HdfsService {
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
-      return "del dir error";
+      throw e;
     }
   }
 
   @Override
-  public String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo) {
+  public String copyHDFSToMultiBucket(CopyDataToMultiBucketDo copyDataToMultiBucketDo)
+      throws URISyntaxException, IOException, InterruptedException {
 
     FileSystem fs = null;
     String message = null;
@@ -97,14 +103,15 @@ public class ServiceImpl implements HdfsService {
       for (String targetBucketID : copyDataToMultiBucketDo.getTargetBucketIDs()) {
         String hdfsTargetBucket =
             flinkJarBasePath + "/" + copyDataToMultiBucketDo.getTag() + "/" + targetBucketID;
-        fs.copyToLocalFile(new Path(hdfsSourceBucket), new Path(hdfsTargetBucket));
+        FileUtil.copy(fs, new Path(hdfsSourceBucket),fs, new Path(hdfsTargetBucket),false,fs.getConf());
+
       }
       message = "copy data to all bucket success";
+      return message;
 
     } catch (Exception e) {
       log.info(e.getMessage(), e);
-      message = "copy data to all bucket error";
+      throw e;
     }
-    return message;
   }
 }

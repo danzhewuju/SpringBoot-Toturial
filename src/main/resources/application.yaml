@@ -1,11 +1,9 @@
 server:
-  port: 8080
+  port: 8088
 spring:
   profiles:
     active: mysql
 hdfs:
   base:
     path: /test
-  bucket:
-    path: /test/bucket
   path: hdfs://feifish.site:9000
