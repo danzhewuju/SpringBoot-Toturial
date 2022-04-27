@@ -11,9 +11,7 @@ import com.satan.mode.Student;
 import com.satan.mode.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +23,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -34,6 +33,7 @@ public class MyBatisPlusApplicationTests {
 
   @Autowired private ComplexQueryMapper complexQueryMapper;
   @Autowired private UserMapper userMapper;
+
 
   @Test
   public void testMapper() {
@@ -134,5 +134,33 @@ public class MyBatisPlusApplicationTests {
     FileUtil.copy(
         fs, new Path("/test/flink/1"), fs, new Path("/test/flink/7"), false, configuration);
  log.info("run success");
+  }
+  @Test
+  public void testGetHdfsDil() throws URISyntaxException, IOException, InterruptedException {
+    Configuration configuration = new Configuration();
+    configuration.set("dfs.client.use.datanode.hostname", "true");
+    FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
+    String path = "/test/flink1.6";
+    ArrayList<String> list = new ArrayList<>();
+    try {
+      RemoteIterator<LocatedFileStatus> rfs = fs.listFiles(new Path(path), false);
+
+      if (rfs != null && rfs.hasNext()) {
+        LocatedFileStatus fileStatus = rfs.next();
+        list.add(fileStatus.getPath().toString());
+      }
+      FileStatus[] fileStatuses = fs.listStatus(new Path(path));
+
+      Arrays.stream(fileStatuses).forEach(one -> {
+        list.add(one.getPath().getName().toString());
+      });
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      throw e;
+    } finally {
+      org.apache.hadoop.io.IOUtils.closeStream(fs);
+    }
+
+ log.info("run success {}",list);
   }
 }

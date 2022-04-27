@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class CreateDirDo {
-    @NotBlank(message = "flink version is blank")
+    @NotBlank(message = "flink tag is blank")
     private String tag;
     @NotBlank(message = "bucket id is null")
     private List<String> bucketIDs;
