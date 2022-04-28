@@ -3,7 +3,7 @@ package com.satan.entity;
 import lombok.Data;
 
 @Data
-public class DeployThuDo {
+public class DeployOnThuDo {
     private CopyDeployDataDo copyDeployDataDo;
-    private DelHdfsDirDo delHdfsDirDo;
+    private DelBucketsDataDo delBucketsDataDo;
 }

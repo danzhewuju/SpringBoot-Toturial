@@ -6,9 +6,9 @@ import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 @Data
-public class DelHdfsDirDo {
+public class DelBucketsDataDo {
     @NotBlank(message = "flink version is blank")
-    private String tag;
+    private String flinkVersion;
     @NotBlank(message = "bucket id is null")
-    private List<String> bucketIds;
+    private List<String> bucketIDs;
 }

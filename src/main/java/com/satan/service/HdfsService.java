@@ -1,15 +1,20 @@
 package com.satan.service;
 
 import com.satan.entity.CopyDeployDataDo;
-import com.satan.entity.CreateDirDo;
-import com.satan.entity.DelHdfsDirDo;
+import com.satan.entity.CreateBucketDirectoriesDo;
+import com.satan.entity.DelBucketsDataDo;
 
 public interface HdfsService {
-  String createHdfsDir(CreateDirDo createDirDo) throws Exception;
 
-  String delHdfsBucketDir(DelHdfsDirDo delHdfsDirDo) throws Exception;
 
   //  String uploadFlinkBucket(UploadBucketDo uploadBucketDo);
+
+
+  String createHdfsDir(CreateBucketDirectoriesDo createBucketDirectoriesDo) throws Exception;
+
+  String delHdfsBucketDir(DelBucketsDataDo delBucketsDataDo) throws Exception;
+
+//  String uploadFlinkMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
 
   String copyDeployData(CopyDeployDataDo copyDeployDataDo) throws Exception;
 }

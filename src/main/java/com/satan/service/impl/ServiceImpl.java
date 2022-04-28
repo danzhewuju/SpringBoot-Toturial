@@ -1,9 +1,8 @@
 package com.satan.service.impl;
 
-import com.satan.entity.CopyDataToMultiBucketDo;
 import com.satan.entity.CopyDeployDataDo;
-import com.satan.entity.CreateDirDo;
-import com.satan.entity.DelHdfsDirDo;
+import com.satan.entity.CreateBucketDirectoriesDo;
+import com.satan.entity.DelBucketsDataDo;
 import com.satan.service.HdfsService;
 import com.satan.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +13,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -67,23 +67,25 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String createHdfsDir(CreateDirDo createDirDo) throws Exception {
+  public String createHdfsDir(CreateBucketDirectoriesDo createBucketDirectoriesDo) throws Exception {
     FileSystem fs = null;
     String mes;
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       // 所需要创建的路径 例如：/hdfsPath/flinkVersion/bucketID/
-      for (String bucketId : createDirDo.getBucketIDs()) {
-        String bucketPath = flinkJarBasePath + "/" + createDirDo.getTag() + "/" + bucketId;
+      for (String bucketId : createBucketDirectoriesDo.getBucketIDs()) {
+        String bucketPath = flinkJarBasePath + "/" + createBucketDirectoriesDo.getFlinkVersion() + "/" + bucketId;
         if (fs.exists(new Path(bucketPath))) {
           mes = "bucketID already exists:" + bucketPath;
         } else {
           fs.mkdirs(new Path(bucketPath));
         }
+        FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+        fs.setPermission(new Path(bucketPath), permission);
       }
-      mes = String.format("create hdfs dir success");
 
-      log.info("create hdfs dir success, path is {}", createDirDo.getBucketIDs());
+      mes = String.format("create hdfs dir success, path is {}", createBucketDirectoriesDo.getBucketIDs());
+      log.info("create hdfs dir success, path is {}", createBucketDirectoriesDo.getBucketIDs());
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -92,23 +94,23 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String delHdfsBucketDir(DelHdfsDirDo delHdfsDirDo) throws Exception {
+  public String delHdfsBucketDir(DelBucketsDataDo delBucketsDataDo) throws Exception {
     FileSystem fs = null;
     String mes = "";
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       // 删除对应路径数据 例如：/hdfsPath/flinkVersion/bucketID/
-      // 没有指定就进行查询
-      if (delHdfsDirDo.getBucketIds() == null || delHdfsDirDo.getBucketIds().size() == 0) {
-        String delDir = flinkJarBasePath + "/" + delHdfsDirDo.getTag();
+      // 没有指定就进行查询并删除全部
+      if (delBucketsDataDo.getBucketIDs() == null || delBucketsDataDo.getBucketIDs().size() == 0) {
+        String delDir = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion();
         FileStatus[] fileStatuses = fs.listStatus(new Path(delDir));
-        delHdfsDirDo.setBucketIds(new ArrayList<>());
+        delBucketsDataDo.setBucketIDs(new ArrayList<>());
         Arrays.stream(fileStatuses).forEach(one -> {
-          delHdfsDirDo.getBucketIds().add(one.getPath().getName());
+          delBucketsDataDo.getBucketIDs().add(one.getPath().getName());
         });
       }
-      for (String bucketId : delHdfsDirDo.getBucketIds()) {
-        String bucketPath = flinkJarBasePath + "/" + delHdfsDirDo.getTag() + "/" + bucketId;
+      for (String bucketId : delBucketsDataDo.getBucketIDs()) {
+        String bucketPath = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion() + "/" + bucketId;
         if (fs.exists(new Path(bucketPath))) { // if the file exists
           fs.delete(new Path(bucketPath), true);
         } else { // if the file not exists
@@ -116,7 +118,7 @@ public class ServiceImpl implements HdfsService {
           log.info(mes);
         }
       }
-      mes = String.format("all buckets {} have been deleted! ", delHdfsDirDo.getBucketIds());
+      mes = String.format("all buckets {} have been deleted! ", delBucketsDataDo.getBucketIDs());
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -124,14 +126,14 @@ public class ServiceImpl implements HdfsService {
     }
   }
 
+
   @Override
-  public String copyDeployData(CopyDeployDataDo copyDeployDataDo)
-      throws Exception {
+  public String copyDeployData(CopyDeployDataDo copyDeployDataDo) throws Exception {
     FileSystem fs = null;
     String message = null;
     try {
       fs = getFileSystem(Constants.HDFS_USER);
-      String hdfsDir = flinkJarBasePath + "/" + copyDeployDataDo.getSourceTag();
+      String hdfsDir = flinkJarBasePath + "/" + copyDeployDataDo.getSourceFlinkVersion();
       FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsDir));
       if (fileStatuses == null || fileStatuses.length == 0) {
         throw new NullPointerException();
@@ -141,11 +143,11 @@ public class ServiceImpl implements HdfsService {
         buckets.add(one.getPath().getName());
       });
       String bucketId = buckets.get(0);
-      String hdfsSourceBucket = flinkJarBasePath + "/" + copyDeployDataDo.getSourceTag() + "/" + bucketId;
+      String hdfsSourceBucket = flinkJarBasePath + "/" + copyDeployDataDo.getSourceFlinkVersion() + "/" + bucketId;
       String hdfsTargetPath = flinkJarBasePath;
       org.apache.hadoop.fs.FileUtil.copy(fs, new Path(hdfsSourceBucket), fs, new Path(hdfsTargetPath), false,true, fs.getConf());
       hdfsSourceBucket = flinkJarBasePath + "/" + bucketId;
-      hdfsTargetPath = flinkJarBasePath + "/" + copyDeployDataDo.getTargetTag();
+      hdfsTargetPath = flinkJarBasePath + "/" + copyDeployDataDo.getTargetFlinkVersion();
       fs.rename(new Path(hdfsSourceBucket), new Path(hdfsTargetPath));
       FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
       fs.setPermission(new Path(hdfsTargetPath), permission);

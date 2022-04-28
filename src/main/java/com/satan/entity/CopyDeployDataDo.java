@@ -6,8 +6,8 @@ import javax.validation.constraints.NotBlank;
 
 @Data
 public class CopyDeployDataDo {
-    @NotBlank(message = "source tag is null")
-    private String sourceTag;
-    @NotBlank(message = "target tag is null")
-    private String targetTag;
+    @NotBlank(message = "source flink version is null")
+    private String sourceFlinkVersion;
+    @NotBlank(message = "target flink version is null")
+    private String targetFlinkVersion;
 }
