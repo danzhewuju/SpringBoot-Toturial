@@ -25,7 +25,7 @@ public class HdfsHandle {
 
     String res = null;
     try {
-      res = hdfsService.createHdfsDir(createBucketDirectoriesDo);
+      res = hdfsService.createMultiBucketDirectories(createBucketDirectoriesDo);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Result.fail(-1002, e.getMessage(), e);
@@ -39,7 +39,7 @@ public class HdfsHandle {
   public Result<String> deleteHdfsDir(HttpServletRequest request, @RequestBody @Valid DelBucketsDataDo delBucketsDataDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      res = hdfsService.delHdfsBucketDir(delBucketsDataDo);
+      res = hdfsService.deleteMultiBucketDirectories(delBucketsDataDo);
       log.info("del buckets data from {} ", delBucketsDataDo);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -67,7 +67,7 @@ public class HdfsHandle {
   public Result<String> deployOnTue(HttpServletRequest request, @Valid @RequestBody DeployOnTueDo deployOnTueDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.createHdfsDir(deployOnTueDo.getCreateBucketDirectoriesDo());
+      hdfsService.createMultiBucketDirectories(deployOnTueDo.getCreateBucketDirectoriesDo());
       log.info("create hdfs dir success {}", deployOnTueDo.getCreateBucketDirectoriesDo());
 //      hdfsService.uploadFlinkMultiBucket(deployOnTueDo.getUploadDataToMultiBucketsDo());
       log.info("upload ci-cd data to multiBuckets success {}", deployOnTueDo.getUploadDataToMultiBucketsDo());
@@ -83,9 +83,9 @@ public class HdfsHandle {
   public Result<String> deployOnThu(HttpServletRequest request, @Valid @RequestBody DeployOnThuDo deployOnThuDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.copyDeployData(deployOnThuDo.getCopyDeployDataDo());
-      log.info("copy data success {}", deployOnThuDo.getCopyDeployDataDo());
-      hdfsService.delHdfsBucketDir(deployOnThuDo.getDelBucketsDataDo());
+      hdfsService.copySingleBucketDataToBase(deployOnThuDo.getRandomCopySingleBucketDataDo());
+      log.info("copy data success {}", deployOnThuDo.getRandomCopySingleBucketDataDo());
+      hdfsService.deleteMultiBucketDirectories(deployOnThuDo.getDelBucketsDataDo());
       log.info("del bucket success {}", deployOnThuDo.getDelBucketsDataDo());
       res = "all data move success";
     } catch (Exception e) {

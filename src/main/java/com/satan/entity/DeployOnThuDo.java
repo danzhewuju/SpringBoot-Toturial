@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class DeployOnThuDo {
-    private CopyDeployDataDo copyDeployDataDo;
+    private RandomCopySingleBucketDataDo randomCopySingleBucketDataDo;
     private DelBucketsDataDo delBucketsDataDo;
 }

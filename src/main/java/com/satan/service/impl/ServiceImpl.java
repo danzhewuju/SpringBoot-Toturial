@@ -1,6 +1,6 @@
 package com.satan.service.impl;
 
-import com.satan.entity.CopyDeployDataDo;
+import com.satan.entity.RandomCopySingleBucketDataDo;
 import com.satan.entity.CreateBucketDirectoriesDo;
 import com.satan.entity.DelBucketsDataDo;
 import com.satan.service.HdfsService;
@@ -13,13 +13,13 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -67,7 +67,7 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String createHdfsDir(CreateBucketDirectoriesDo createBucketDirectoriesDo) throws Exception {
+  public String createMultiBucketDirectories(CreateBucketDirectoriesDo createBucketDirectoriesDo) throws Exception {
     FileSystem fs = null;
     String mes;
     try {
@@ -94,7 +94,7 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String delHdfsBucketDir(DelBucketsDataDo delBucketsDataDo) throws Exception {
+  public String deleteMultiBucketDirectories(DelBucketsDataDo delBucketsDataDo) throws Exception {
     FileSystem fs = null;
     String mes = "";
     try {
@@ -104,10 +104,9 @@ public class ServiceImpl implements HdfsService {
       if (delBucketsDataDo.getBucketIDs() == null || delBucketsDataDo.getBucketIDs().size() == 0) {
         String delDir = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion();
         FileStatus[] fileStatuses = fs.listStatus(new Path(delDir));
-        delBucketsDataDo.setBucketIDs(new ArrayList<>());
-        Arrays.stream(fileStatuses).forEach(one -> {
-          delBucketsDataDo.getBucketIDs().add(one.getPath().getName());
-        });
+        List<String> names = new ArrayList<>();
+        Arrays.stream(fileStatuses).forEach(one -> names.add(one.getPath().getName()));
+        delBucketsDataDo.setBucketIDs(names.stream().filter(item -> item.indexOf(Constants.BUCKET) == 0).collect(Collectors.toList()));
       }
       for (String bucketId : delBucketsDataDo.getBucketIDs()) {
         String bucketPath = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion() + "/" + bucketId;
@@ -128,12 +127,12 @@ public class ServiceImpl implements HdfsService {
 
 
   @Override
-  public String copyDeployData(CopyDeployDataDo copyDeployDataDo) throws Exception {
+  public String copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception {
     FileSystem fs = null;
     String message = null;
     try {
       fs = getFileSystem(Constants.HDFS_USER);
-      String hdfsDir = flinkJarBasePath + "/" + copyDeployDataDo.getSourceFlinkVersion();
+      String hdfsDir = flinkJarBasePath + "/" + randomCopySingleBucketDataDo.getSourceFlinkVersion();
       FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsDir));
       if (fileStatuses == null || fileStatuses.length == 0) {
         throw new NullPointerException();
@@ -143,11 +142,11 @@ public class ServiceImpl implements HdfsService {
         buckets.add(one.getPath().getName());
       });
       String bucketId = buckets.get(0);
-      String hdfsSourceBucket = flinkJarBasePath + "/" + copyDeployDataDo.getSourceFlinkVersion() + "/" + bucketId;
+      String hdfsSourceBucket = flinkJarBasePath + "/" + randomCopySingleBucketDataDo.getSourceFlinkVersion() + "/" + bucketId;
       String hdfsTargetPath = flinkJarBasePath;
       org.apache.hadoop.fs.FileUtil.copy(fs, new Path(hdfsSourceBucket), fs, new Path(hdfsTargetPath), false,true, fs.getConf());
       hdfsSourceBucket = flinkJarBasePath + "/" + bucketId;
-      hdfsTargetPath = flinkJarBasePath + "/" + copyDeployDataDo.getTargetFlinkVersion();
+      hdfsTargetPath = flinkJarBasePath + "/" + randomCopySingleBucketDataDo.getTargetFlinkVersion();
       fs.rename(new Path(hdfsSourceBucket), new Path(hdfsTargetPath));
       FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
       fs.setPermission(new Path(hdfsTargetPath), permission);
