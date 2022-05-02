@@ -3,6 +3,7 @@ package com.satan.service;
 import com.satan.entity.RandomCopySingleBucketDataDo;
 import com.satan.entity.CreateBucketDirectoriesDo;
 import com.satan.entity.DelBucketsDataDo;
+import com.satan.entity.UploadDataToMultiBucketsDo;
 
 public interface HdfsService {
 
@@ -17,4 +18,6 @@ public interface HdfsService {
 //  String uploadFlinkMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
 
   String copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception;
+
+  String uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
 }
