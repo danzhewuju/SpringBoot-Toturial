@@ -132,7 +132,7 @@ public class MyBatisPlusApplicationTests {
     configuration.set("dfs.client.use.datanode.hostname", "true");
     FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
     FileUtil.copy(
-        fs, new Path("/test/flink/1"), fs, new Path("/test/flink/7"), false, configuration);
+        fs, new Path("/test/FLINK-1.11.3.35-Tue"), fs, new Path("/test/FLINK-1.11.3.35-Test"), false, configuration);
  log.info("run success");
   }
   @Test
@@ -140,7 +140,7 @@ public class MyBatisPlusApplicationTests {
     Configuration configuration = new Configuration();
     configuration.set("dfs.client.use.datanode.hostname", "true");
     FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
-    String path = "/test/flink1.6";
+    String path = "/test/FLINK-1.11.3.35-Tue";
     ArrayList<String> list = new ArrayList<>();
     try {
       RemoteIterator<LocatedFileStatus> rfs = fs.listFiles(new Path(path), false);

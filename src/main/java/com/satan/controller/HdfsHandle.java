@@ -67,9 +67,7 @@ public class HdfsHandle {
   public Result<String> deployOnTue(HttpServletRequest request, @Valid @RequestBody DeployOnTueDo deployOnTueDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.createMultiBucketDirectories(deployOnTueDo.getCreateBucketDirectoriesDo());
-      log.info("create hdfs dir success {}", deployOnTueDo.getCreateBucketDirectoriesDo());
-//      hdfsService.uploadFlinkMultiBucket(deployOnTueDo.getUploadDataToMultiBucketsDo());
+      hdfsService.uploadFlinkToMultiBucket(deployOnTueDo.getUploadDataToMultiBucketsDo());
       log.info("upload ci-cd data to multiBuckets success {}", deployOnTueDo.getUploadDataToMultiBucketsDo());
       res = "deploy success";
     } catch (Exception e) {

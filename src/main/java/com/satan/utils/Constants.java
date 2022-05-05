@@ -86,7 +86,7 @@ public class Constants {
   public static final String GIT_COMMIT_ID = "commitId";
   public static final String TIMESTAMP = "timestamp";
   public static final String INSTANCE_ID = "instance_id";
-  public static final String HDFS_USER = "hdfs";
+  public static final String HDFS_USER = "hadoop";
   public static final String HADOOP_GROUP = "hadoop";
   public static final String LIB_DIR_KEY = "/lib";
   public static final String BSQL_DIR_KEY = "/bsql";

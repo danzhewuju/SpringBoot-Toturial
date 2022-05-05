@@ -87,7 +87,7 @@ public class ServiceImpl implements HdfsService {
                 fs.setPermission(new Path(bucketPath), permission);
             }
 
-            mes = String.format("create hdfs dir success, path is {}", createBucketDirectoriesDo.getBucketIDs());
+            mes = "create hdfs dir success, path is " + createBucketDirectoriesDo.getBucketIDs();
             log.info("create hdfs dir success, path is {}", createBucketDirectoriesDo.getBucketIDs());
             return mes;
         } catch (Exception e) {
@@ -120,7 +120,7 @@ public class ServiceImpl implements HdfsService {
                     log.info(mes);
                 }
             }
-            mes = String.format("all buckets {} have been deleted! ", delBucketsDataDo.getBucketIDs());
+            mes = "all buckets " + delBucketsDataDo.getBucketIDs() + "have been deleted! ";
             return mes;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -169,16 +169,13 @@ public class ServiceImpl implements HdfsService {
             FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
             String sourcePath = flinkCIPath + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
             String targetDir = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion();
-            org.apache.hadoop.fs.FileUtil.copy(fs, new Path(sourcePath), fs, new Path(targetDir), false, fs.getConf());
-            String oldSourcePath = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion() + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
-            String newSourPath = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion() + "/" + uploadDataToMultiBucketsDo.getTargetBucketIDs().get(0);
-            fs.rename(new Path(oldSourcePath), new Path(newSourPath));
-            fs.setPermission(new Path(newSourPath), permission);
-            for (int i = 1; i < uploadDataToMultiBucketsDo.getTargetBucketIDs().size(); i++) {
-                String targetBucketId = uploadDataToMultiBucketsDo.getTargetBucketIDs().get(i);
-                String hdfsTargetBucket = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion() + "/" + targetBucketId;
-                org.apache.hadoop.fs.FileUtil.copy(fs, new Path(newSourPath), fs, new Path(hdfsTargetBucket), false, fs.getConf());
-                fs.setPermission(new Path(hdfsTargetBucket), permission);
+            String tmp = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion() + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
+            for (String bucketId : uploadDataToMultiBucketsDo.getTargetBucketIDs()) {
+                org.apache.hadoop.fs.FileUtil.copy(fs, new Path(sourcePath), fs, new Path(targetDir), false, fs.getConf());
+                String newSourPath = flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion() + "/" + bucketId;
+                fs.rename(new Path(tmp), new Path(newSourPath));
+                fs.setPermission(new Path(newSourPath), permission);
+
             }
             return "ci-cd data upload to " + uploadDataToMultiBucketsDo.getTargetBucketIDs();
         } catch (Exception e) {
