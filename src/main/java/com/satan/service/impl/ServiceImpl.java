@@ -204,12 +204,6 @@ public class ServiceImpl implements HdfsService {
       uploadDataToMultiBucketsDo
           .getTargetBucketIDs()
           .forEach(one -> targetQueue.add(targetDir + "/" + one));
-      //      for (String bucketId : uploadDataToMultiBucketsDo.getTargetBucketIDs()) {
-      //        String targetPath = targetDir + "/" + bucketId;
-      //        org.apache.hadoop.fs.FileUtil.copy(
-      //            fs, new Path(sourcePath), fs, new Path(targetPath), false, true, fs.getConf());
-      //        fs.setPermission(new Path(targetPath), permission);
-      //      }
       sourcePaths.add(sourcePath);
       while (targetQueue.size() > 0) {
         List<CompletableFuture<String>> futures = new CopyOnWriteArrayList<>();
