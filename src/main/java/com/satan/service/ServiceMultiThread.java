@@ -19,8 +19,22 @@ public class ServiceMultiThread {
   @Async("taskExecutor")
   public CompletableFuture<Integer> addNumber(int a, int b) throws InterruptedException {
     log.info(Thread.currentThread().getName());
-    log.info("a is {}, b is {} res is {}",a,b, a + b);
+    log.info("a is {}, b is {} res is {}", a, b, a + b);
     Thread.sleep(2000);
-    return CompletableFuture.completedFuture(a+b);
+    return CompletableFuture.completedFuture(a + b);
+  }
+
+  @Async("taskExecutor")
+  public CompletableFuture<Integer> getResource(int res, int cost) throws InterruptedException {
+    log.info("Thread name : {}, it get resource {}", Thread.currentThread().getName(), res);
+    return CompletableFuture.completedFuture(res-cost);
+
+  }
+
+  @Async("taskExecutor")
+  public CompletableFuture<Integer> putResource(int res, int cost) throws InterruptedException {
+    log.info("Thread name : {}, it get resource {}", Thread.currentThread().getName(), res);
+    return CompletableFuture.completedFuture(res+cost);
+
   }
 }

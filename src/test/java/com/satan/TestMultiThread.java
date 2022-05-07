@@ -1,6 +1,7 @@
 package com.satan;
 
 import com.satan.entity.UploadDataToMultiBucketsDo;
+import com.satan.service.BankService;
 import com.satan.service.HdfsService;
 import com.satan.service.ServiceMultiThread;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -24,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 public class TestMultiThread {
   @Autowired ServiceMultiThread serviceMultiThread;
   @Autowired HdfsService hdfsService;
+  @Autowired BankService bankService;
+  private int res = 10000;
 
   @Test
   public void testThread() throws InterruptedException {
@@ -82,5 +88,20 @@ public class TestMultiThread {
     Arrays.stream(tmp).sequential().forEach(targetBucketIDs::add);
     uploadDataToMultiBucketsDo.setTargetBucketIDs(targetBucketIDs);
     hdfsService.uploadFlinkToMultiBucket(uploadDataToMultiBucketsDo);
+  }
+
+  @Test
+  public void testMultiThreads() throws InterruptedException, ExecutionException {
+
+    //    for (int i = 0; i < 1500; i++) {
+    //      CompletableFuture<Integer> resource = serviceMultiThread.getResource(res, 5);
+    //      res = resource.get();
+    //    }
+    //    log.info("res is {}", res);
+    for (int i = 0; i < 10; i++) {
+      bankService.addResource(1);
+    }
+    Thread.sleep(20000);
+    log.info(String.valueOf(BankService.res));
   }
 }
