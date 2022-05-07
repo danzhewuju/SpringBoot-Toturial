@@ -5,6 +5,8 @@ import com.satan.entity.CreateBucketDirectoriesDo;
 import com.satan.entity.DelBucketsDataDo;
 import com.satan.entity.UploadDataToMultiBucketsDo;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface HdfsService {
 
 
@@ -15,9 +17,8 @@ public interface HdfsService {
 
   String deleteMultiBucketDirectories(DelBucketsDataDo delBucketsDataDo) throws Exception;
 
-//  String uploadFlinkMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
 
-  String copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception;
+  void copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception;
 
-  String uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
+  void uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
 }

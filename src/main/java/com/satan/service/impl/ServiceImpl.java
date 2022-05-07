@@ -5,12 +5,14 @@ import com.satan.entity.DelBucketsDataDo;
 import com.satan.entity.RandomCopySingleBucketDataDo;
 import com.satan.entity.UploadDataToMultiBucketsDo;
 import com.satan.service.HdfsService;
+import com.satan.service.MultiThreadsService;
 import com.satan.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +41,8 @@ public class ServiceImpl implements HdfsService {
 
   @Value("${hdfs.path}")
   private String hdfsPath;
+
+  @Autowired MultiThreadsService multiThreadsService;
 
   public FileSystem getFileSystem(String user)
       throws URISyntaxException, IOException, InterruptedException {
@@ -133,6 +140,12 @@ public class ServiceImpl implements HdfsService {
           log.info(mes);
         }
       }
+      // if directory is null, which will be deleted.
+      String bucketDir = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion();
+      FileStatus[] fileStatuses = fs.listStatus(new Path(bucketDir));
+      if(fileStatuses.length == 0){
+        fs.delete(new Path(bucketDir), false);
+      }
       mes = "all buckets " + delBucketsDataDo.getBucketIDs() + "have been deleted! ";
       return mes;
     } catch (Exception e) {
@@ -142,7 +155,7 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String copySingleBucketDataToBase(
+  public void copySingleBucketDataToBase(
       RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception {
     FileSystem fs = null;
     String message = null;
@@ -178,7 +191,7 @@ public class ServiceImpl implements HdfsService {
           new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
       fs.setPermission(new Path(hdfsTargetPath), permission);
       message = "copy data to " + hdfsTargetPath + " bucket success";
-      return message;
+      log.info(message);
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;
@@ -186,11 +199,14 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo)
+  @Async("taskExecutor")
+  public void uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo)
       throws Exception {
     FileSystem fs = null;
     CopyOnWriteArrayList<String> sourcePaths = new CopyOnWriteArrayList<>();
     Queue<String> targetQueue = new ConcurrentLinkedQueue<>();
+    log.info("main:{}", Thread.currentThread().getName());
+
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       FsPermission permission =
@@ -198,18 +214,18 @@ public class ServiceImpl implements HdfsService {
       String sourcePath = flinkCIPath + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
       String targetDir =
           flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion();
-      if (!fs.exists(new Path(targetDir))) {
-        fs.mkdirs(new Path(targetDir));
-      }
+//      if (!fs.exists(new Path(targetDir))) {
+//        fs.mkdirs(new Path(targetDir));
+//      }
       uploadDataToMultiBucketsDo
           .getTargetBucketIDs()
           .forEach(one -> targetQueue.add(targetDir + "/" + one));
       sourcePaths.add(sourcePath);
-      while (targetQueue.size() > 0) {
+      while (!targetQueue.isEmpty()) {
         List<CompletableFuture<String>> futures = new CopyOnWriteArrayList<>();
         for (String path : sourcePaths) {
-          if (targetQueue.size() > 0) {
-            futures.add(multiThreadsCopy(path, targetQueue.poll(), fs, permission));
+          if (!targetQueue.isEmpty()) {
+            futures.add(multiThreadsService.multiThreadsCopy(path, targetQueue.poll(), fs, permission));
           } else {
             break;
           }
@@ -226,19 +242,9 @@ public class ServiceImpl implements HdfsService {
               }
             });
       }
-      return "ci-cd data upload to " + uploadDataToMultiBucketsDo.getTargetBucketIDs();
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;
     }
-  }
-
-  @Async("taskExecutor")
-  public CompletableFuture<String> multiThreadsCopy(
-      String sourcePaths, String targetPaths, FileSystem fs, FsPermission fsPermission)
-      throws IOException {
-    FileUtil.copy(fs, new Path(sourcePaths), fs, new Path(targetPaths), false, true, fs.getConf());
-    fs.setPermission(new Path(targetPaths), fsPermission);
-    return CompletableFuture.completedFuture(targetPaths);
   }
 }
