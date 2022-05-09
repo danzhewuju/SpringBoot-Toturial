@@ -64,13 +64,14 @@ public class HdfsHandle {
 
   @ApiOperation(value = "周二发版接口", httpMethod = "POST")
   @PostMapping(value = "/ci/flink/deployOnTue")
-  public Result<String> deployOnTue(HttpServletRequest request, @RequestBody @Valid DeployOnTueDo deployOnTueDo, @RequestHeader("Alter-Token") String token) {
+  public Result<String> deployOnTue(HttpServletRequest request, @RequestBody @Valid UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.uploadFlinkToMultiBucket(deployOnTueDo.getUploadDataToMultiBucketsDo());
-      log.info("upload ci-cd data to multiBuckets success {}", deployOnTueDo.getUploadDataToMultiBucketsDo());
+      hdfsService.uploadFlinkToMultiBucket(uploadDataToMultiBucketsDo);
+      log.info("upload ci-cd data to multiBuckets success {}", uploadDataToMultiBucketsDo);
       res = "deploy success";
     } catch (Exception e) {
+      log.error(e.getMessage(), e);
       return Result.fail(-1002, e.getMessage(), e);
     }
     return Result.succ(res);
