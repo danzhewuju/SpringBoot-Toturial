@@ -12,6 +12,7 @@ import com.satan.mode.User;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.io.IOUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,6 @@ public class MyBatisPlusApplicationTests {
 
   @Autowired private ComplexQueryMapper complexQueryMapper;
   @Autowired private UserMapper userMapper;
-
 
   @Test
   public void testMapper() {
@@ -133,9 +133,15 @@ public class MyBatisPlusApplicationTests {
     configuration.set("dfs.client.use.datanode.hostname", "true");
     FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
     FileUtil.copy(
-        fs, new Path("/test/FLINK-1.11.3.35-Tue"), fs, new Path("/test/FLINK-1.11.3.35-Test"), false, configuration);
- log.info("run success");
+        fs,
+        new Path("/test/FLINK-1.11.3.35-Tue"),
+        fs,
+        new Path("/test/FLINK-1.11.3.35-Test"),
+        false,
+        configuration);
+    log.info("run success");
   }
+
   @Test
   public void testGetHdfsDil() throws URISyntaxException, IOException, InterruptedException {
     Configuration configuration = new Configuration();
@@ -152,9 +158,11 @@ public class MyBatisPlusApplicationTests {
       }
       FileStatus[] fileStatuses = fs.listStatus(new Path(path));
 
-      Arrays.stream(fileStatuses).forEach(one -> {
-        list.add(one.getPath().getName().toString());
-      });
+      Arrays.stream(fileStatuses)
+          .forEach(
+              one -> {
+                list.add(one.getPath().getName().toString());
+              });
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
@@ -162,15 +170,29 @@ public class MyBatisPlusApplicationTests {
       org.apache.hadoop.io.IOUtils.closeStream(fs);
     }
 
- log.info("run success {}",list);
+    log.info("run success {}", list);
   }
+
   @Test
-  public void testMain(){
-    List<Integer> res = new ArrayList<>(Arrays.asList(1,2,3,4,5));
+  public void testMain() {
+    List<Integer> res = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
     res.add(6);
-    int [] ans = {1,2,3,4,5,6};
+    int[] ans = {1, 2, 3, 4, 5, 6};
     res.forEach(System.out::println);
-    List <Integer> collects = res.stream().filter(one -> one < 5).collect(Collectors.toList());
+    List<Integer> collects = res.stream().filter(one -> one < 5).collect(Collectors.toList());
     collects.forEach(System.out::println);
+  }
+
+  @Test
+  public void testWriteFile() throws URISyntaxException, IOException, InterruptedException {
+    Configuration configuration = new Configuration();
+    configuration.set("dfs.client.use.datanode.hostname", "true");
+    FileSystem fs = FileSystem.get(new URI("hdfs://feifish.site:9000"), configuration, "hadoop");
+//    FSDataInputStream in = fs.open(new Path("/test/test.txt"));
+//    String s = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
+//    log.info(s);
+    FSDataOutputStream file = fs.create(new Path("/test/_LAST_GRAY_VERSION"));
+    file.writeBytes("hello, this is tmp file");
+    file.close();
   }
 }

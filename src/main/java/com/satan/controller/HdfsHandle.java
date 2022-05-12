@@ -5,6 +5,7 @@ import com.satan.entity.*;
 import com.satan.service.HdfsService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import javax.validation.Valid;
 public class HdfsHandle {
 
   @Autowired HdfsService hdfsService;
+
 
   @ApiOperation(value = "根据bucket id列表创建bucket id文件夹", httpMethod = "POST")
   @PostMapping(value = "/ci/flink/create/hdfs/dir", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -50,11 +52,12 @@ public class HdfsHandle {
 
   @ApiOperation(value = "上传CI/CD产物到多个bucket id", httpMethod = "POST")
   @PostMapping(value = "/ci/flink/upload/multiBuckets", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Result<String> uploadDataToMultiBuckets(HttpServletRequest request, @Valid @RequestBody UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo, @RequestHeader("Alter-Token") String token) {
+  public Result<String> uploadDataToMultiBuckets(HttpServletRequest request, @RequestBody @Valid DeployGrayReleaseDo deployGrayReleaseDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-//      res = hdfsService.uploadFlinkMultiBucket(uploadDataToMultiBucketsDo);
-      log.info("upload ci-cd data params is {}", uploadDataToMultiBucketsDo);
+      hdfsService.uploadFlinkToMultiBuckets(deployGrayReleaseDo);
+      log.info("upload ci-cd data params is {}", deployGrayReleaseDo);
+      res = "upload ci-cd data params is " + deployGrayReleaseDo;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Result.fail(-1002, e.getMessage(), e);
@@ -64,17 +67,23 @@ public class HdfsHandle {
 
   @ApiOperation(value = "灰度发布接口", httpMethod = "POST")
   @PostMapping(value = "/ci/flink/deployGrayRelease", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Result<String> deployGrayRelease(HttpServletRequest request, @RequestBody @Valid UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo, @RequestHeader("Alter-Token") String token) {
+  public Result<String> deployGrayRelease(HttpServletRequest request, @RequestBody @Valid DeployGrayReleaseDo deployGrayReleaseDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.uploadFlinkToMultiBuckets(uploadDataToMultiBucketsDo);
-      log.info("upload ci-cd data to multiBuckets success {}", uploadDataToMultiBucketsDo);
-      res = "deploy success";
+      boolean finished = hdfsService.setLastGrayDeployVersion(deployGrayReleaseDo.getTargetFlinkVersion(), deployGrayReleaseDo.getSourceFlinkVersion());
+      if (finished) {
+        hdfsService.uploadFlinkToMultiBuckets(deployGrayReleaseDo);
+        log.info("upload ci-cd data to multiBuckets success {}", deployGrayReleaseDo);
+        res = "deploy success";
+        return Result.succ(res);
+      } else {
+        res = "there is an error when writing gray version temporary file.";
+        return Result.fail(-1002, res, null);
+      }
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       return Result.fail(-1002, e.getMessage(), e);
     }
-    return Result.succ(res);
   }
 
   @ApiOperation(value = "全量发布接口", httpMethod = "POST")
@@ -82,15 +91,35 @@ public class HdfsHandle {
   public Result<String> deployFullRelease(HttpServletRequest request, @RequestBody @Valid DeployFullReleaseDo deployFullReleaseDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.copySingleBucketDataToBase(deployFullReleaseDo.getRandomCopySingleBucketDataDo());
-      log.info("copy data success {}", deployFullReleaseDo.getRandomCopySingleBucketDataDo());
-      hdfsService.deleteMultiBucketDirectories(deployFullReleaseDo.getDelBucketsDataDo());
-      log.info("del bucket success {}", deployFullReleaseDo.getDelBucketsDataDo());
-      res = "all data move success";
+      String lastGrayDeployVersion = hdfsService.pollLastGrayDeployVersion(deployFullReleaseDo.getRandomCopySingleBucketDataDo().getSourceFlinkVersion());
+      if (StringUtils.isNotEmpty(lastGrayDeployVersion)) {
+        deployFullReleaseDo.getRandomCopySingleBucketDataDo().setTargetFlinkVersion(lastGrayDeployVersion);
+        hdfsService.copySingleBucketDataToBase(deployFullReleaseDo.getRandomCopySingleBucketDataDo());
+        log.info("copy data success {}", deployFullReleaseDo.getRandomCopySingleBucketDataDo());
+        hdfsService.deleteMultiBucketDirectories(deployFullReleaseDo.getDelBucketsDataDo());
+        log.info("del bucket success {}", deployFullReleaseDo.getDelBucketsDataDo());
+        res = "all data move success";
+      } else {
+        res = "there is no last gray version, so no data to move";
+      }
     } catch (Exception e) {
       return Result.fail(-1002, e.getMessage(), e);
     }
     return Result.succ(res);
+  }
+
+  @ApiOperation(value = "紧急发版接口", httpMethod = "POST")
+  @PostMapping(value = "/ci/flink/hotFixRelease", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Result<String> deployHotFixRelease(HttpServletRequest request, @RequestBody @Valid DeployHotFixReleaseDo deployHotFixReleaseDo, @RequestHeader("Alter-Token") String token) {
+    String res = null;
+    try {
+      hdfsService.pollLastGrayDeployVersion(deployHotFixReleaseDo.getFlinkVersion());
+      hdfsService.deployHotfixRelease(deployHotFixReleaseDo);
+      res = "hotfix release success";
+      return Result.succ(res);
+    } catch (Exception e) {
+      return Result.fail(-1002, e.getMessage(), e);
+    }
   }
 
 

@@ -1,9 +1,6 @@
 package com.satan.service.impl;
 
-import com.satan.entity.CreateBucketDirectoriesDo;
-import com.satan.entity.DelBucketsDataDo;
-import com.satan.entity.RandomCopySingleBucketDataDo;
-import com.satan.entity.UploadDataToMultiBucketsDo;
+import com.satan.entity.*;
 import com.satan.service.HdfsService;
 import com.satan.service.MultiThreadsService;
 import com.satan.utils.Constants;
@@ -20,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -83,27 +81,24 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public String createMultiBucketDirectories(CreateBucketDirectoriesDo createBucketDirectoriesDo)
-      throws Exception {
+  public String createMultiBucketDirectories(CreateBucketDirectoriesDo createBucketDirectoriesDo) throws Exception {
     FileSystem fs = null;
     String mes;
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       // 所需要创建的路径 例如：/hdfsPath/flinkVersion/bucketID/
       for (String bucketId : createBucketDirectoriesDo.getBucketIDs()) {
-        String bucketPath =
-            flinkJarBasePath + "/" + createBucketDirectoriesDo.getFlinkVersion() + "/" + bucketId;
+        String bucketPath = flinkCIPath + "/" + createBucketDirectoriesDo.getFlinkVersion() + "/" + bucketId;
         if (fs.exists(new Path(bucketPath))) {
           mes = "bucketID already exists:" + bucketPath;
         } else {
           fs.mkdirs(new Path(bucketPath));
         }
-        FsPermission permission =
-            new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+        FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
         fs.setPermission(new Path(bucketPath), permission);
       }
 
-      mes = "create hdfs dir success, path is " + createBucketDirectoriesDo.getBucketIDs();
+      mes = "create hdfs dir success, path is " + createBucketDirectoriesDo.getBucketIDs().toString();
       log.info("create hdfs dir success, path is {}", createBucketDirectoriesDo.getBucketIDs());
       return mes;
     } catch (Exception e) {
@@ -121,18 +116,14 @@ public class ServiceImpl implements HdfsService {
       // 删除对应路径数据 例如：/hdfsPath/flinkVersion/bucketID/
       // 没有指定就进行查询并删除全部
       if (delBucketsDataDo.getBucketIDs() == null || delBucketsDataDo.getBucketIDs().size() == 0) {
-        String delDir = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion();
+        String delDir = flinkCIPath + "/" + delBucketsDataDo.getFlinkVersion();
         FileStatus[] fileStatuses = fs.listStatus(new Path(delDir));
         List<String> names = new ArrayList<>();
         Arrays.stream(fileStatuses).forEach(one -> names.add(one.getPath().getName()));
-        delBucketsDataDo.setBucketIDs(
-            names.stream()
-                .filter(item -> item.indexOf(Constants.BUCKET) == 0)
-                .collect(Collectors.toList()));
+        delBucketsDataDo.setBucketIDs(names.stream().filter(item -> item.indexOf(Constants.BUCKET) == 0).collect(Collectors.toList()));
       }
       for (String bucketId : delBucketsDataDo.getBucketIDs()) {
-        String bucketPath =
-            flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion() + "/" + bucketId;
+        String bucketPath = flinkCIPath + "/" + delBucketsDataDo.getFlinkVersion() + "/" + bucketId;
         if (fs.exists(new Path(bucketPath))) { // if the file exists
           fs.delete(new Path(bucketPath), true);
         } else { // if the file not exists
@@ -141,12 +132,12 @@ public class ServiceImpl implements HdfsService {
         }
       }
       // if directory is null, which will be deleted.
-      String bucketDir = flinkJarBasePath + "/" + delBucketsDataDo.getFlinkVersion();
+      String bucketDir = flinkCIPath + "/" + delBucketsDataDo.getFlinkVersion();
       FileStatus[] fileStatuses = fs.listStatus(new Path(bucketDir));
-      if(fileStatuses.length == 0){
+      if (fileStatuses.length == 0) {
         fs.delete(new Path(bucketDir), false);
       }
-      mes = "all buckets " + delBucketsDataDo.getBucketIDs() + "have been deleted! ";
+      mes = "all buckets " + delBucketsDataDo.getBucketIDs() + " have been deleted! ";
       return mes;
     } catch (Exception e) {
       log.error(e.getMessage(), e);
@@ -155,53 +146,8 @@ public class ServiceImpl implements HdfsService {
   }
 
   @Override
-  public void copySingleBucketDataToBase(
-      RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception {
-    FileSystem fs = null;
-    String message = null;
-    try {
-      fs = getFileSystem(Constants.HDFS_USER);
-      String hdfsDir =
-          flinkJarBasePath + "/" + randomCopySingleBucketDataDo.getSourceFlinkVersion();
-      FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsDir));
-      if (fileStatuses == null || fileStatuses.length == 0) {
-        throw new NullPointerException();
-      }
-      ArrayList<String> buckets = new ArrayList<>();
-      Arrays.stream(fileStatuses)
-          .forEach(
-              one -> {
-                buckets.add(one.getPath().getName());
-              });
-      String bucketId = buckets.get(0);
-      String hdfsSourceBucket =
-          flinkJarBasePath
-              + "/"
-              + randomCopySingleBucketDataDo.getSourceFlinkVersion()
-              + "/"
-              + bucketId;
-      String hdfsTargetPath = flinkJarBasePath;
-      org.apache.hadoop.fs.FileUtil.copy(
-          fs, new Path(hdfsSourceBucket), fs, new Path(hdfsTargetPath), false, true, fs.getConf());
-      hdfsSourceBucket = flinkJarBasePath + "/" + bucketId;
-      hdfsTargetPath =
-          flinkJarBasePath + "/" + randomCopySingleBucketDataDo.getTargetFlinkVersion();
-      fs.rename(new Path(hdfsSourceBucket), new Path(hdfsTargetPath));
-      FsPermission permission =
-          new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
-      fs.setPermission(new Path(hdfsTargetPath), permission);
-      message = "copy data to " + hdfsTargetPath + " bucket success";
-      log.info(message);
-    } catch (Exception e) {
-      log.info(e.getMessage(), e);
-      throw e;
-    }
-  }
-
-  @Override
   @Async("taskExecutor")
-  public void uploadFlinkToMultiBuckets(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo)
-      throws Exception {
+  public void uploadFlinkToMultiBuckets(DeployGrayReleaseDo deployGrayReleaseDo) throws Exception {
     FileSystem fs = null;
     CopyOnWriteArrayList<String> sourcePaths = new CopyOnWriteArrayList<>();
     Queue<String> targetQueue = new ConcurrentLinkedQueue<>();
@@ -209,13 +155,13 @@ public class ServiceImpl implements HdfsService {
       fs = getFileSystem(Constants.HDFS_USER);
       FsPermission permission =
               new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
-      String sourcePath = flinkCIPath + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
+      String sourcePath = flinkCIPath + "/" + deployGrayReleaseDo.getSourceFlinkVersion();
       String targetDir =
-              flinkCIPath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion();
+              flinkCIPath + "/" + deployGrayReleaseDo.getTargetFlinkVersion();
       if (!fs.exists(new Path(targetDir))) {
         fs.mkdirs(new Path(targetDir));
       }
-      uploadDataToMultiBucketsDo.getTargetBucketIDs().forEach(one -> targetQueue.add(targetDir + "/" + one));
+      deployGrayReleaseDo.getTargetBucketIDs().forEach(one -> targetQueue.add(targetDir + "/" + one));
       String newSourcePath = targetQueue.poll();
       assert newSourcePath != null;
       fs.rename(new Path(sourcePath), new Path(newSourcePath));
@@ -241,10 +187,106 @@ public class ServiceImpl implements HdfsService {
                   }
                 });
       }
-      log.info("upload flink to multi buckets success! {}", uploadDataToMultiBucketsDo.getTargetBucketIDs());
+      log.info("upload flink to multi buckets success! {}", deployGrayReleaseDo.getTargetBucketIDs());
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;
+    }
+  }
+
+  @Override
+  public void copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception {
+    FileSystem fs = null;
+    String mes = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      String hdfsDir = flinkCIPath + "/" + randomCopySingleBucketDataDo.getSourceFlinkVersion();
+      FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsDir));
+      if (fileStatuses == null || fileStatuses.length == 0) {
+        throw new NullPointerException();
+      }
+      ArrayList<String> buckets = new ArrayList<>();
+      Arrays.stream(fileStatuses).forEach(one -> {
+        buckets.add(one.getPath().getName());
+      });
+      String bucketId = buckets.get(0);
+      String hdfsSourceBucket = flinkCIPath + "/" + randomCopySingleBucketDataDo.getSourceFlinkVersion() + "/" + bucketId;
+      String hdfsTargetPath = flinkCIPath;
+      org.apache.hadoop.fs.FileUtil.copy(fs, new Path(hdfsSourceBucket), fs, new Path(hdfsTargetPath), false, true, fs.getConf());
+      hdfsSourceBucket = flinkCIPath + "/" + bucketId;
+      hdfsTargetPath = flinkCIPath + "/" + randomCopySingleBucketDataDo.getTargetFlinkVersion();
+      fs.rename(new Path(hdfsSourceBucket), new Path(hdfsTargetPath));
+      FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+      fs.setPermission(new Path(hdfsTargetPath), permission);
+      mes = "copy data to " + hdfsTargetPath + " bucket success";
+      log.info(mes);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      throw e;
+    }
+  }
+
+  @Override
+  public void deployHotfixRelease(DeployHotFixReleaseDo deployHotFixReleaseDo) throws Exception {
+    FileSystem fs = null;
+    String mes = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+      DelBucketsDataDo delBucketsDataDo = new DelBucketsDataDo();
+      delBucketsDataDo.setFlinkVersion(deployHotFixReleaseDo.getFlinkVersion());
+      deleteMultiBucketDirectories(delBucketsDataDo);
+      String sourcePath = flinkCIPath + "/" + deployHotFixReleaseDo.getSourceFlinkVersion();
+      String targetPath = flinkCIPath + "/" + deployHotFixReleaseDo.getTargetFlinkVersion();
+      fs.rename(new Path(sourcePath), new Path(targetPath));
+      fs.setPermission(new Path(targetPath), permission);
+      mes = "deploy hotfix release success!";
+      log.info(mes);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      throw e;
+    }
+  }
+
+  @Override
+  public String pollLastGrayDeployVersion(String flinkVersion) throws IOException {
+    FileSystem fs = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      String grayVersionTemporaryFile = flinkCIPath + "/" + flinkVersion + "/" + Constants.LAST_GRAY_VERSION;
+      String lastGrayDeployVersion;
+      if (!fs.exists(new Path(grayVersionTemporaryFile))) {
+        return null;
+      } else {
+        FSDataInputStream in = fs.open(new Path(grayVersionTemporaryFile));
+        lastGrayDeployVersion = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8);
+        in.close();
+        fs.delete(new Path(grayVersionTemporaryFile), false);
+      }
+      return lastGrayDeployVersion;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new IOException();
+    }
+  }
+
+  @Override
+  public boolean setLastGrayDeployVersion(String flinkVersion, String grayDeployVersion) throws IOException {
+    FileSystem fs = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      FsPermission permission =
+              new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+      String grayVersionTemporaryFile = flinkCIPath + "/" + flinkVersion + "/" + Constants.LAST_GRAY_VERSION;
+      FSDataOutputStream out = fs.create(new Path(grayVersionTemporaryFile));
+      out.writeBytes(grayDeployVersion);
+      out.close();
+      fs.setPermission(new Path(grayVersionTemporaryFile), permission);
+      return true;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new IOException();
     }
   }
 }

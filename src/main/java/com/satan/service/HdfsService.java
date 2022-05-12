@@ -1,9 +1,8 @@
 package com.satan.service;
 
-import com.satan.entity.RandomCopySingleBucketDataDo;
-import com.satan.entity.CreateBucketDirectoriesDo;
-import com.satan.entity.DelBucketsDataDo;
-import com.satan.entity.UploadDataToMultiBucketsDo;
+import com.satan.entity.*;
+
+import java.io.IOException;
 
 public interface HdfsService {
 
@@ -15,8 +14,13 @@ public interface HdfsService {
 
   String deleteMultiBucketDirectories(DelBucketsDataDo delBucketsDataDo) throws Exception;
 
+  void uploadFlinkToMultiBuckets(DeployGrayReleaseDo deployGrayReleaseDo) throws Exception;
 
   void copySingleBucketDataToBase(RandomCopySingleBucketDataDo randomCopySingleBucketDataDo) throws Exception;
 
-  void uploadFlinkToMultiBuckets(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo) throws Exception;
+  void deployHotfixRelease(DeployHotFixReleaseDo deployHotFixReleaseDo) throws Exception;
+
+  String pollLastGrayDeployVersion(String flinkVersion) throws IOException;
+
+  boolean setLastGrayDeployVersion(String flinkVersion, String grayDeployVersion) throws IOException;
 }

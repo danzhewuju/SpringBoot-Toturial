@@ -132,4 +132,5 @@ public class Constants {
   public static final int QUEUE_CAPACITY = 1000;
   public static final int KEEP_ALIVE_TIME = 60;
   public static final String THREAD_NAME_PREFIX = "DefaultThreadPool_";
+  public static final String LAST_GRAY_VERSION = "_LAST_GRAY_VERSION";
 }

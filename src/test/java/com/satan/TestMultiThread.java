@@ -1,6 +1,5 @@
 package com.satan;
 
-import com.satan.entity.UploadDataToMultiBucketsDo;
 import com.satan.service.BankService;
 import com.satan.service.HdfsService;
 import com.satan.service.ServiceMultiThread;
@@ -13,8 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -65,33 +62,6 @@ public class TestMultiThread {
   }
 
   @Test
-  public void testHdfsService() throws Exception {
-    UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo = new UploadDataToMultiBucketsDo();
-    uploadDataToMultiBucketsDo.setSourceFlinkVersion("FLINK-1.11.3.35-Tue");
-    uploadDataToMultiBucketsDo.setTargetFlinkVersion("1.11.3");
-    ArrayList<String> targetBucketIDs = new ArrayList<>();
-    String[] tmp = {
-      "bucket-1",
-      "bucket-2",
-      "bucket-3",
-      "bucket-4",
-      "bucket-5",
-      "bucket-6",
-      "bucket-7",
-      "bucket-8",
-      "bucket-9",
-      "bucket-10",
-      "bucket-11",
-      "bucket-12",
-      "bucket-13",
-      "bucket-14"
-    };
-    Arrays.stream(tmp).sequential().forEach(targetBucketIDs::add);
-    uploadDataToMultiBucketsDo.setTargetBucketIDs(targetBucketIDs);
-    hdfsService.uploadFlinkToMultiBuckets(uploadDataToMultiBucketsDo);
-  }
-
-  @Test
   public void testMultiThreads() throws InterruptedException, ExecutionException {
 
     //    for (int i = 0; i < 1500; i++) {
@@ -111,6 +81,6 @@ public class TestMultiThread {
     for (int i = 0; i < 10; i++) {
       new Thread(new MyThread()).start();
     }
-    log.info("my name is "+Thread.currentThread().getName());
+    log.info("my name is " + Thread.currentThread().getName());
   }
 }

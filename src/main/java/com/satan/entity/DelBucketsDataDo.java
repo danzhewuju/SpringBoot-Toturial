@@ -9,6 +9,5 @@ import java.util.List;
 public class DelBucketsDataDo {
     @NotBlank(message = "flink version is blank")
     private String flinkVersion;
-    @NotBlank(message = "bucket id is null")
     private List<String> bucketIDs;
 }
