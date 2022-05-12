@@ -200,27 +200,26 @@ public class ServiceImpl implements HdfsService {
 
   @Override
   @Async("taskExecutor")
-  public void uploadFlinkToMultiBucket(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo)
+  public void uploadFlinkToMultiBuckets(UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo)
       throws Exception {
     FileSystem fs = null;
     CopyOnWriteArrayList<String> sourcePaths = new CopyOnWriteArrayList<>();
     Queue<String> targetQueue = new ConcurrentLinkedQueue<>();
-    log.info("main:{}", Thread.currentThread().getName());
-
     try {
       fs = getFileSystem(Constants.HDFS_USER);
       FsPermission permission =
-          new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+              new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
       String sourcePath = flinkCIPath + "/" + uploadDataToMultiBucketsDo.getSourceFlinkVersion();
       String targetDir =
-          flinkJarBasePath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion();
-//      if (!fs.exists(new Path(targetDir))) {
-//        fs.mkdirs(new Path(targetDir));
-//      }
-      uploadDataToMultiBucketsDo
-          .getTargetBucketIDs()
-          .forEach(one -> targetQueue.add(targetDir + "/" + one));
-      sourcePaths.add(sourcePath);
+              flinkCIPath + "/" + uploadDataToMultiBucketsDo.getTargetFlinkVersion();
+      if (!fs.exists(new Path(targetDir))) {
+        fs.mkdirs(new Path(targetDir));
+      }
+      uploadDataToMultiBucketsDo.getTargetBucketIDs().forEach(one -> targetQueue.add(targetDir + "/" + one));
+      String newSourcePath = targetQueue.poll();
+      assert newSourcePath != null;
+      fs.rename(new Path(sourcePath), new Path(newSourcePath));
+      sourcePaths.add(newSourcePath);
       while (!targetQueue.isEmpty()) {
         List<CompletableFuture<String>> futures = new CopyOnWriteArrayList<>();
         for (String path : sourcePaths) {
@@ -232,16 +231,17 @@ public class ServiceImpl implements HdfsService {
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         futures.forEach(
-            one -> {
-              try {
-                sourcePaths.add(one.get());
-              } catch (InterruptedException e) {
-                log.error(e.getMessage(), e);
-              } catch (ExecutionException e) {
-                e.printStackTrace();
-              }
-            });
+                one -> {
+                  try {
+                    sourcePaths.add(one.get());
+                  } catch (InterruptedException e) {
+                    log.error(e.getMessage(), e);
+                  } catch (ExecutionException e) {
+                    e.printStackTrace();
+                  }
+                });
       }
+      log.info("upload flink to multi buckets success! {}", uploadDataToMultiBucketsDo.getTargetBucketIDs());
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;

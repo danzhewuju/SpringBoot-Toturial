@@ -4,6 +4,7 @@ import com.satan.entity.UploadDataToMultiBucketsDo;
 import com.satan.service.BankService;
 import com.satan.service.HdfsService;
 import com.satan.service.ServiceMultiThread;
+import com.satan.utils.MyThread;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -87,7 +88,7 @@ public class TestMultiThread {
     };
     Arrays.stream(tmp).sequential().forEach(targetBucketIDs::add);
     uploadDataToMultiBucketsDo.setTargetBucketIDs(targetBucketIDs);
-    hdfsService.uploadFlinkToMultiBucket(uploadDataToMultiBucketsDo);
+    hdfsService.uploadFlinkToMultiBuckets(uploadDataToMultiBucketsDo);
   }
 
   @Test
@@ -103,5 +104,13 @@ public class TestMultiThread {
     }
     Thread.sleep(20000);
     log.info(String.valueOf(BankService.res));
+  }
+
+  @Test
+  public void testMyThread() {
+    for (int i = 0; i < 10; i++) {
+      new Thread(new MyThread()).start();
+    }
+    log.info("my name is "+Thread.currentThread().getName());
   }
 }

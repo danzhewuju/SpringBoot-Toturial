@@ -62,12 +62,12 @@ public class HdfsHandle {
     return Result.succ(res);
   }
 
-  @ApiOperation(value = "周二发版接口", httpMethod = "POST")
-  @PostMapping(value = "/ci/flink/deployOnTue")
-  public Result<String> deployOnTue(HttpServletRequest request, @RequestBody @Valid UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo, @RequestHeader("Alter-Token") String token) {
+  @ApiOperation(value = "灰度发布接口", httpMethod = "POST")
+  @PostMapping(value = "/ci/flink/deployGrayRelease", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Result<String> deployGrayRelease(HttpServletRequest request, @RequestBody @Valid UploadDataToMultiBucketsDo uploadDataToMultiBucketsDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.uploadFlinkToMultiBucket(uploadDataToMultiBucketsDo);
+      hdfsService.uploadFlinkToMultiBuckets(uploadDataToMultiBucketsDo);
       log.info("upload ci-cd data to multiBuckets success {}", uploadDataToMultiBucketsDo);
       res = "deploy success";
     } catch (Exception e) {
@@ -77,15 +77,15 @@ public class HdfsHandle {
     return Result.succ(res);
   }
 
-  @ApiOperation(value = "周四发版接口", httpMethod = "POST")
-  @PostMapping(value = "/ci/flink/deployOnThu")
-  public Result<String> deployOnThu(HttpServletRequest request, @Valid @RequestBody DeployOnThuDo deployOnThuDo, @RequestHeader("Alter-Token") String token) {
+  @ApiOperation(value = "全量发布接口", httpMethod = "POST")
+  @PostMapping(value = "/ci/flink/deployFullRelease", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Result<String> deployFullRelease(HttpServletRequest request, @RequestBody @Valid DeployFullReleaseDo deployFullReleaseDo, @RequestHeader("Alter-Token") String token) {
     String res = null;
     try {
-      hdfsService.copySingleBucketDataToBase(deployOnThuDo.getRandomCopySingleBucketDataDo());
-      log.info("copy data success {}", deployOnThuDo.getRandomCopySingleBucketDataDo());
-      hdfsService.deleteMultiBucketDirectories(deployOnThuDo.getDelBucketsDataDo());
-      log.info("del bucket success {}", deployOnThuDo.getDelBucketsDataDo());
+      hdfsService.copySingleBucketDataToBase(deployFullReleaseDo.getRandomCopySingleBucketDataDo());
+      log.info("copy data success {}", deployFullReleaseDo.getRandomCopySingleBucketDataDo());
+      hdfsService.deleteMultiBucketDirectories(deployFullReleaseDo.getDelBucketsDataDo());
+      log.info("del bucket success {}", deployFullReleaseDo.getDelBucketsDataDo());
       res = "all data move success";
     } catch (Exception e) {
       return Result.fail(-1002, e.getMessage(), e);
