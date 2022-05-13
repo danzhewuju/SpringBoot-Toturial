@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -115,8 +116,11 @@ public class ServiceImpl implements HdfsService {
       fs = getFileSystem(Constants.HDFS_USER);
       // 删除对应路径数据 例如：/hdfsPath/flinkVersion/bucketID/
       // 没有指定就进行查询并删除全部
+      String delDir = flinkCIPath + "/" + delBucketsDataDo.getFlinkVersion();
+      if(!fs.exists(new Path(delDir))) {
+        return null;
+      }
       if (delBucketsDataDo.getBucketIDs() == null || delBucketsDataDo.getBucketIDs().size() == 0) {
-        String delDir = flinkCIPath + "/" + delBucketsDataDo.getFlinkVersion();
         FileStatus[] fileStatuses = fs.listStatus(new Path(delDir));
         List<String> names = new ArrayList<>();
         Arrays.stream(fileStatuses).forEach(one -> names.add(one.getPath().getName()));
@@ -288,5 +292,28 @@ public class ServiceImpl implements HdfsService {
       e.printStackTrace();
       throw new IOException();
     }
+  }
+
+  @Override
+  public List<String> getRandomBucketsList(String flinkVersion) throws Exception {
+    FileSystem fs = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      String hdfsDir = flinkCIPath + "/" + flinkVersion;
+      try{
+        FileStatus[] fileStatuses = fs.listStatus(new Path(hdfsDir));
+        List<String> bucketIds = new ArrayList<>();
+        List<String> finalNames = new ArrayList<>();
+        Arrays.stream(fileStatuses).forEach(one -> finalNames.add(one.getPath().getName()));
+        finalNames.stream().filter(one -> one.indexOf(Constants.BUCKET) == 0 && one.contains(Constants.BUCKEY_SPLIT)).forEach(one->bucketIds.add(one.split("-")[1]));
+        return bucketIds;
+      }catch (FileNotFoundException e){
+        return new ArrayList<>();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new Exception(e.getMessage());
+    }
+
   }
 }

@@ -91,7 +91,6 @@ public class Constants {
   public static final String LIB_DIR_KEY = "/lib";
   public static final String BSQL_DIR_KEY = "/bsql";
   public static final String FLINK_JARS_BASE_DIR = "/department/bigdata/flink/engine/basic";
-  public static final String BUCKET = "bucket";
 
   public static final String FLINK_BILIBILI_START_LIB = "flink-bilibili-starter";
   public static final String FLINK_JAR_USER = "flink";
@@ -133,4 +132,7 @@ public class Constants {
   public static final int KEEP_ALIVE_TIME = 60;
   public static final String THREAD_NAME_PREFIX = "DefaultThreadPool_";
   public static final String LAST_GRAY_VERSION = "_LAST_GRAY_VERSION";
+  public static final String BUCKET = "bucket";
+  public static final String BUCKEY_SPLIT = "-";
+
 }

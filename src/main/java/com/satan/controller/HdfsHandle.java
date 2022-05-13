@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @RequestMapping("/api/alter/cicd/pack/hdfs/open/")
 @RestController
@@ -118,6 +119,19 @@ public class HdfsHandle {
       res = "hotfix release success";
       return Result.succ(res);
     } catch (Exception e) {
+      return Result.fail(-1002, e.getMessage(), e);
+    }
+  }
+
+  @ApiOperation(value="获取上一次灰度发版随机bucket-id列表",httpMethod="GET")
+  @GetMapping(value = "/ci/flink/get/gray/buckets/list", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Result<List<String>> getGrayBucketsList(HttpServletRequest request, @RequestParam(value = "flinkVersion", required = true) String flinkVersion, @RequestHeader("Alter-Token") String token) {
+    List<String> res = null;
+    try {
+      List<String> randomBucketsList = hdfsService.getRandomBucketsList(flinkVersion);
+      return Result.succ(randomBucketsList);
+    } catch (Exception e) {
+      e.printStackTrace();
       return Result.fail(-1002, e.getMessage(), e);
     }
   }
