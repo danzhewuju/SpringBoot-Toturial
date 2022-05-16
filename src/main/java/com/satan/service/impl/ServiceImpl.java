@@ -1,5 +1,6 @@
 package com.satan.service.impl;
 
+import com.amazonaws.util.IOUtils;
 import com.satan.entity.*;
 import com.satan.service.HdfsService;
 import com.satan.service.MultiThreadsService;
@@ -105,6 +106,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -146,6 +149,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -195,6 +200,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       log.info(e.getMessage(), e);
       throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -227,6 +234,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -249,6 +258,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -272,6 +283,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       e.printStackTrace();
       throw new IOException();
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -291,6 +304,8 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       e.printStackTrace();
       throw new IOException();
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
   }
 
@@ -313,7 +328,32 @@ public class ServiceImpl implements HdfsService {
     } catch (Exception e) {
       e.printStackTrace();
       throw new Exception(e.getMessage());
+    }finally {
+      IOUtils.closeQuietly(fs, null);
     }
 
+  }
+
+  @Override
+  public String renameFlinkTagName(RenameFlinkTagDo renameFlinkTagDo) throws Exception {
+    FileSystem fs = null;
+    try {
+      fs = getFileSystem(Constants.HDFS_USER);
+      FsPermission permission = new FsPermission(FsAction.ALL, FsAction.READ_WRITE, FsAction.READ_WRITE);
+      String originalTagPath = flinkCIPath + "/" + renameFlinkTagDo.getOriginalTagName();
+      String newTagNamePath = flinkCIPath + "/" + renameFlinkTagDo.getNewTagName();
+      if (!fs.exists(new Path(originalTagPath))) {
+        throw new Exception("original tag path not exist!");
+      } else {
+        fs.rename(new Path(originalTagPath), new Path(newTagNamePath));
+        fs.setPermission(new Path(newTagNamePath), permission);
+      }
+      return String.format("%s is renamed to %s", originalTagPath, newTagNamePath);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }finally {
+      IOUtils.closeQuietly(fs, null);
+    }
   }
 }

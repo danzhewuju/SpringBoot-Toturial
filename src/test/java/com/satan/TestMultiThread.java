@@ -83,4 +83,10 @@ public class TestMultiThread {
     }
     log.info("my name is " + Thread.currentThread().getName());
   }
+
+  @Test
+  public void testRun(){
+    String a = String.format("hello , my name is %s, i am %d", "yuhao", 11);
+    System.out.println(a);
+  }
 }

@@ -136,5 +136,18 @@ public class HdfsHandle {
     }
   }
 
+  @ApiOperation(value = "重新命名flink tag标签", httpMethod = "POST")
+  @PostMapping(value = "/ci/flink/rename/hdfs/tag", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Result<String> renameFlinkTag(HttpServletRequest request,@RequestBody @Valid RenameFlinkTagDo renameFlinkTagDo, @RequestHeader("Alter-Token") String token) {
+    String res = null;
+    try {
+      res = hdfsService.renameFlinkTagName(renameFlinkTagDo);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      return Result.fail(-1002, e.getMessage(), e);
+    }
+    return Result.succ(res);
+  }
+
 
 }

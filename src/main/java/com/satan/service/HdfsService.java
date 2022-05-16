@@ -27,4 +27,7 @@ public interface HdfsService {
       throws IOException;
 
   List<String> getRandomBucketsList(String flinkVersion) throws Exception;
+
+  String renameFlinkTagName(RenameFlinkTagDo renameFlinkTagDo) throws Exception;
+
 }
