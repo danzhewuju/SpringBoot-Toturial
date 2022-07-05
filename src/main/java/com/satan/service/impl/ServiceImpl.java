@@ -44,6 +44,7 @@ public class ServiceImpl implements HdfsService {
 
   @Autowired MultiThreadsService multiThreadsService;
 
+
   public FileSystem getFileSystem(String user)
       throws URISyntaxException, IOException, InterruptedException {
     Configuration configuration = new Configuration();
