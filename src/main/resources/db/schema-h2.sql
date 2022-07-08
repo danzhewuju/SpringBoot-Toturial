@@ -1,3 +1,4 @@
+use test;
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS game;
 create table user

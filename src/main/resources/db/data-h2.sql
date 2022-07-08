@@ -1,3 +1,4 @@
+use test;
 DELETE FROM user;
 DELETE FROM game;
 
