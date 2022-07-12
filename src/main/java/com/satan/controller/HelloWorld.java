@@ -1,8 +1,10 @@
 package com.satan.controller;
 
 import com.satan.mode.User;
+import com.satan.service.TestService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -19,10 +21,14 @@ import java.util.Map;
 @RequestMapping(value = "/test")
 @Api(tags = "接口测试")
 public class HelloWorld {
+
+  @Autowired
+  TestService testService;
+
   @GetMapping("/hello")
   @ApiOperation(value = "hello 接口测试", httpMethod = "GET")
   public String hello() {
-    return "hello world";
+    return testService.test();
   }
 
   @GetMapping("/list")

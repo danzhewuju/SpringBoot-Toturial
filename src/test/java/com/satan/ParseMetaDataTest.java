@@ -17,7 +17,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -31,12 +30,17 @@ import java.util.stream.Stream;
 public class ParseMetaDataTest {
     public static Set<String> findDependentFilesByCheckpointMeta(CheckpointMetadata checkpointMetadata) {
 
-        return checkpointMetadata.getOperatorStates().stream().map(operatorState -> operatorState.getSubtaskStates()).flatMap((Function<Map<Integer, OperatorSubtaskState>, Stream<OperatorSubtaskState>>) subtaskIndex2OperatorSubtaskState -> subtaskIndex2OperatorSubtaskState.values().stream()).flatMap((Function<OperatorSubtaskState, Stream<KeyedStateHandle>>) operatorSubtaskState -> {
-            Set<KeyedStateHandle> allKeyedStateHandles = new HashSet<>();
-            allKeyedStateHandles.addAll(operatorSubtaskState.getManagedKeyedState());
-            allKeyedStateHandles.addAll(operatorSubtaskState.getRawKeyedState());
-            return allKeyedStateHandles.stream();
-        }).filter(keyedStateHandle -> keyedStateHandle instanceof IncrementalRemoteKeyedStateHandle).flatMap(incrementalRemoteKeyedStateHandle -> ((IncrementalRemoteKeyedStateHandle) incrementalRemoteKeyedStateHandle).getSharedState().values().stream()).filter(keyedStateHandle -> keyedStateHandle instanceof FileStateHandle).map(fileStateHandle -> ((FileStateHandle) fileStateHandle).getFilePath().toString()).collect(Collectors.toSet());
+        return checkpointMetadata.getOperatorStates().stream()
+                .map(operatorState -> operatorState.getSubtaskStates())
+                .flatMap((Function<Map<Integer, OperatorSubtaskState>, Stream<OperatorSubtaskState>>) subtaskIndex2OperatorSubtaskState -> subtaskIndex2OperatorSubtaskState.values().stream()).flatMap((Function<OperatorSubtaskState, Stream<KeyedStateHandle>>) operatorSubtaskState -> {
+                    Set<KeyedStateHandle> allKeyedStateHandles = new HashSet<>();
+                    allKeyedStateHandles.addAll(operatorSubtaskState.getManagedKeyedState());
+                    allKeyedStateHandles.addAll(operatorSubtaskState.getRawKeyedState());
+                    return allKeyedStateHandles.stream();
+                })
+                .filter(keyedStateHandle -> keyedStateHandle instanceof IncrementalRemoteKeyedStateHandle).flatMap(incrementalRemoteKeyedStateHandle -> ((IncrementalRemoteKeyedStateHandle) incrementalRemoteKeyedStateHandle).getSharedState().values().stream())
+                .filter(keyedStateHandle -> keyedStateHandle instanceof FileStateHandle)
+                .map(fileStateHandle -> ((FileStateHandle) fileStateHandle).getFilePath().toString()).collect(Collectors.toSet());
 
     }
 
