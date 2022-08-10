@@ -1,27 +1,25 @@
 package com.satan;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.satan.mode.User;
-import org.apache.flink.util.FileUtils;
+import com.satan.zookeeper.BaseZookeeper;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TestJava {
     public static void main(String[] args) throws IOException {
 
-        String path = "src/main/resources/test.json";
-        File file = new File(path);
-        String content = FileUtils.readFile(file, "utf-8");
-        JsonArray jsonArray = new Gson().fromJson(content, JsonArray.class);
-        List<User> result = new ArrayList<>();
-        jsonArray.forEach(
-                object -> {
-                    result.add(new Gson().fromJson(object, User.class));
-                });
-        result.forEach(System.out::println);
+        for (int i = 0; i < 3; i++) {
+            new Thread(() -> {
+                System.out.println(Thread.currentThread().getName());
+                BaseZookeeper baseZookeeper = new BaseZookeeper();
+                try {
+                    baseZookeeper.connectZookeeper("localhost:2181");
+                    baseZookeeper.createNode("/test03", "rewrite data test!");
+                    baseZookeeper.closeConnection();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }).start();
+        }
+
     }
 }
