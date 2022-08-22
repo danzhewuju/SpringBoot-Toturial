@@ -1,25 +1,27 @@
 package com.satan;
 
-import com.satan.zookeeper.BaseZookeeper;
+import org.apache.flink.api.common.time.Time;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TestJava {
+
+    public static final long  RESET_TASK_FAILURE_COUNT_TIME = 60*1000L;
+
     public static void main(String[] args) throws IOException {
 
-        for (int i = 0; i < 3; i++) {
-            new Thread(() -> {
-                System.out.println(Thread.currentThread().getName());
-                BaseZookeeper baseZookeeper = new BaseZookeeper();
-                try {
-                    baseZookeeper.connectZookeeper("localhost:2181");
-                    baseZookeeper.createNode("/test03", "rewrite data test!");
-                    baseZookeeper.closeConnection();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }).start();
+        AtomicInteger currentRestartAttempt = new AtomicInteger(0);
+        for (int i = 0; i < 10; i++) {
+            currentRestartAttempt.incrementAndGet();
         }
+        System.out.println(currentRestartAttempt.get());
+        Time time = Time.of(-1, TimeUnit.MILLISECONDS);
+        System.out.println(time.toMilliseconds());
+
 
     }
 }

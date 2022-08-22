@@ -77,7 +77,7 @@ public class ZookeeperTest {
         baseZookeeper.connectZookeeper(ZOOKEEPER_HOST);
 //        String data = baseZookeeper.getData("/flink/default/realtime/flink/latest_checkpoints");
 //        log.info(data);
-        byte[] data = baseZookeeper.zookeeper.getData("/flink/default/realtime/flink/latest_checkpoints", false, null);
+        byte[] data = baseZookeeper.zookeeper.getData("/flink/default/realtime/flink/latest_checkpoints/SABERID", false, null);
         LatestCheckpointInfoStore latestCheckpointInfoStore = new Gson().fromJson(new String(data), LatestCheckpointInfoStore.class);
         // 毫秒时间戳转化为标准时间
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(latestCheckpointInfoStore.getTriggerCheckpointTimestampMillis());
