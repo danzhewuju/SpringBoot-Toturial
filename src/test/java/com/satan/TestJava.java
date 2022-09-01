@@ -2,6 +2,7 @@ package com.satan;
 
 import org.apache.flink.api.common.time.Time;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,13 +15,10 @@ public class TestJava {
 
     public static void main(String[] args) throws IOException {
 
-        AtomicInteger currentRestartAttempt = new AtomicInteger(0);
-        for (int i = 0; i < 10; i++) {
-            currentRestartAttempt.incrementAndGet();
-        }
-        System.out.println(currentRestartAttempt.get());
-        Time time = Time.of(-1, TimeUnit.MILLISECONDS);
-        System.out.println(time.toMilliseconds());
+       if(new File("src/main/resources/"+"yarn/_metadata").exists()){
+           System.out.println("文件存在！！！");
+       }
+
 
 
     }

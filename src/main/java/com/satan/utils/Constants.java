@@ -135,4 +135,8 @@ public class Constants {
   public static final String BUCKET = "bucket";
   public static final String BUCKEY_SPLIT = "-";
 
+  public static final String CHECKPOINT_HDFS_PATH =
+          "viewfs://jssz-bigdata-cluster/realtime/flink/checkpoint/state/";
+  public static final String CHECKPOINT_HDFS_TEMPORARY_PATH = "viewfs://jssz-bigdata-cluster/tmp/trash";
+
 }
