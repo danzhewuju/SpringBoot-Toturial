@@ -4,7 +4,6 @@ package com.satan;
 import com.satan.service.TestService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.junit.platform.commons.util.StringUtils;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -21,10 +20,17 @@ public class SpringTest {
 
     @Test
     public void serviceTest() {
-        String path = "viewfs://jssz-bigdata-cluster/realtime/flink/checkpoint/state/8605f8ef60054fa39adaeb50a0e05ca9" +
-                      "/ed7c43b7fa8e23334a126e52d27";
-        String new_path = path.replace("checkpoint", "checkpoint/trash");
-        System.out.println(new_path);
+        String tag = "FLINK-1.11.12.123";
+        if (tag.matches("FLINK-(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)")) {
+            log.info("match");
+            int res = Integer.parseInt(tag.substring(tag.lastIndexOf(".") + 1));
+            log.info("res:{}", res);
+            String preKey = tag.substring(0, tag.lastIndexOf("."));
+            log.info("preKey:{}", preKey);
+        } else {
+            log.info("don't match");
+        }
+
     }
 
 }

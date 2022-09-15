@@ -1,18 +1,20 @@
 package com.satan;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.carrotsearch.sizeof.RamUsageEstimator;
+import com.satan.entity.SaberJobRunHistoryBean;
 import com.satan.mapper.ComplexQueryMapper;
-import com.satan.mapper.UserMapper;
 import com.satan.mode.ComplexQuery;
 import com.satan.mode.ComplexQueryResult;
 import com.satan.mode.Student;
 import com.satan.mode.User;
+import com.satan.service.impl.SaberJobRunHistoryServiceImp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.io.IOUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +36,6 @@ import java.util.stream.Collectors;
 public class MyBatisPlusApplicationTests {
 
   @Autowired private ComplexQueryMapper complexQueryMapper;
-  @Autowired private UserMapper userMapper;
 
   @Test
   public void testMapper() {
@@ -43,11 +44,26 @@ public class MyBatisPlusApplicationTests {
   }
 
   @Test
-  public void testPage() {
-    IPage<User> page = new Page<>();
-    User user = userMapper.selectById(0);
-    System.out.println(user);
+  public void TestQueryData() {
+    SaberJobRunHistoryServiceImp saberJobRunHistoryServiceImp = new SaberJobRunHistoryServiceImp();
+    String saberId = "988e3439f28e44069c7cfd75207bbb64";
+    LambdaQueryWrapper<SaberJobRunHistoryBean> wrapper = new QueryWrapper<SaberJobRunHistoryBean>().lambda();
+    wrapper.eq(SaberJobRunHistoryBean::getJobId, saberId).eq(SaberJobRunHistoryBean::getDeleted, "0")
+           .orderByDesc(SaberJobRunHistoryBean::getId);
+    IPage<SaberJobRunHistoryBean> page = new Page<>(1, 1);
+    SaberJobRunHistoryBean saberJobRunHistoryBean = saberJobRunHistoryServiceImp.page(page, wrapper).getRecords()
+                                                                                .get(0);
+    int status = 5;
+    log.info(saberJobRunHistoryBean.toString());
+    if (saberJobRunHistoryBean.getStatus() == status) {
+      log.info("作业处于离线状态");
+      log.info("作业处于");
+    }else{
+      log.info("作业出于非离线状态");
+    }
+
   }
+
 
   @Test
   public void TestStudent() {
