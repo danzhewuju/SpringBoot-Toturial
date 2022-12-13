@@ -22,12 +22,22 @@ import java.util.List;
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 public class SpringbootApplication {
+
+  public String getPath(){
+    return Thread.currentThread().getContextClassLoader().getResource("/_metadata").toString();
+  }
+
   public static void main(String[] args) throws IOException {
     SpringApplication.run(SpringbootApplication.class, args);
 
-    LoadFile loadFile = new LoadFile();
-    loadFile.getPathFile();
-
+    SpringbootApplication springbootApplication = new SpringbootApplication();
+    String path = springbootApplication.getPath();
+    System.out.println(path);
+    if (new File(path).exists()){
+      System.out.println("文件存在！！");
+    }else {
+      System.out.println("文件不存在！！");
+    }
 
   }
 }

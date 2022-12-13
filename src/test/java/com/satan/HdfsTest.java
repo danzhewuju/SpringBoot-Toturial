@@ -3,11 +3,14 @@ package com.satan;
 import com.satan.service.HdfsService;
 import com.satan.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.runtime.checkpoint.Checkpoints;
+import org.apache.flink.runtime.checkpoint.metadata.CheckpointMetadata;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.htrace.shaded.commons.logging.Log;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +20,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RunWith(SpringRunner.class)
@@ -103,10 +109,49 @@ public class HdfsTest {
 
         }
         Path sourcePath = new Path(source);
-        FileStatus fileStatus =
-                Arrays.stream(fs.listStatus(sourcePath.getParent())).filter(f -> f.getPath().getName().equals(sourcePath.getName())).collect(Collectors.toList()).get(0);
+        FileStatus fileStatus = Arrays.stream(fs.listStatus(sourcePath.getParent()))
+                                      .filter(f -> f.getPath().getName().equals(sourcePath.getName()))
+                                      .collect(Collectors.toList()).get(0);
 
         log.info("name:{}, mtime:{}", fileStatus.getPath(), fileStatus.getModificationTime());
 
+    }
+
+
+    @Test
+    public void testListMetaData() throws URISyntaxException, IOException, InterruptedException {
+        Configuration conf = new Configuration();
+        List<String> result = new ArrayList<>();
+        String directoryPath = "/flink/saberID1";
+        FileSystem fs = FileSystem.get(new URI(hdfsPath), conf, USER);
+        List<FileStatus> jobInstanceStatuses = Arrays.asList(fs.listStatus(new Path(directoryPath)));
+        jobInstanceStatuses.sort(Comparator.comparingLong(FileStatus::getModificationTime).reversed());
+        for (FileStatus jobInstanceStatus : jobInstanceStatuses) {
+            Arrays.stream(fs.listStatus(jobInstanceStatus.getPath()))
+                  .filter(fileStatus -> fileStatus.getPath().getName().startsWith("chk-"))
+                  .sorted(Comparator.comparingLong(FileStatus::getModificationTime).reversed()).forEach(fileStatus -> {
+                      try {
+                          for (FileStatus status : fs.listStatus(fileStatus.getPath())) {
+                              if (status.getPath().getName().equals("_metadata")) {
+                                  result.add(status.getPath().toString());
+                                  break;
+                              }
+                          }
+                      } catch (IOException e) {
+                          throw new RuntimeException(e);
+                      }
+                  });
+        }
+        result.forEach(System.out::println);
+
+    }
+
+    @Test
+    public void testReadMetadataFile() throws URISyntaxException, IOException, InterruptedException {
+        FileSystem fs = FileSystem.get(new URI(hdfsPath), new Configuration(), USER);
+        String path = "/data/_metadata";
+        FSDataInputStream data = fs.open(new Path(path));
+        CheckpointMetadata metadata = Checkpoints.loadCheckpointMetadata(data, this.getClass().getClassLoader(), null);
+        log.info("metadata:{}", metadata);
     }
 }
